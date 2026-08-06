@@ -1,3 +1,68 @@
 <Solution>
-  <Project Path="MoneyKeeper.Identity/MoneyKeeper.Identity.csproj" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/MoneyKeeper.Identity.Application/" />
+  <Folder Name="/src/MoneyKeeper.Identity.Application/Common/">
+    <File Path="src/MoneyKeeper.Identity.Application/Common/ErrorCodes.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Application/Common/Interfaces/">
+    <File Path="src/MoneyKeeper.Identity.Application/Common/Interfaces/IIdentityService.cs" />
+    <File Path="src/MoneyKeeper.Identity.Application/Common/Interfaces/IJwtService.cs" />
+    <File Path="src/MoneyKeeper.Identity.Application/Common/Interfaces/IPasswordHasher.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Application/Contracts/" />
+  <Folder Name="/src/MoneyKeeper.Identity.Application/Contracts/Auth/">
+    <File Path="src/MoneyKeeper.Identity.Application/Contracts/Auth/AuthResult.cs" />
+    <File Path="src/MoneyKeeper.Identity.Application/Contracts/Auth/LoginRequest.cs" />
+    <File Path="src/MoneyKeeper.Identity.Application/Contracts/Auth/RegisterRequest.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Application/Services/">
+    <File Path="src/MoneyKeeper.Identity.Application/Services/IdentityService.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Core/" />
+  <Folder Name="/src/MoneyKeeper.Identity.Core/Common/">
+    <File Path="src/MoneyKeeper.Identity.Core/Common/Error.cs" />
+    <File Path="src/MoneyKeeper.Identity.Core/Common/Result.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Core/Common/Interfaces/">
+    <File Path="src/MoneyKeeper.Identity.Core/Common/Interfaces/IIdentityRepository.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Core/Entities/">
+    <File Path="src/MoneyKeeper.Identity.Core/Entities/User.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Infrastructure/" />
+  <Folder Name="/src/MoneyKeeper.Identity.Infrastructure/Auth/">
+    <File Path="src/MoneyKeeper.Identity.Infrastructure/Auth/JwtOptions.cs" />
+    <File Path="src/MoneyKeeper.Identity.Infrastructure/Auth/JwtService.cs" />
+    <File Path="src/MoneyKeeper.Identity.Infrastructure/Auth/PasswordHasher.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Infrastructure/Data/">
+    <File Path="src/MoneyKeeper.Identity.Infrastructure/Data/IdentityDbContext.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity.Infrastructure/Data/Repositories/">
+    <File Path="src/MoneyKeeper.Identity.Infrastructure/Data/Repositories/IdentityRepository.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity/">
+    <File Path="src/MoneyKeeper.Identity/appsettings.Development.json" />
+    <File Path="src/MoneyKeeper.Identity/appsettings.json" />
+    <File Path="src/MoneyKeeper.Identity/MoneyKeeper.Identity.csproj.user" />
+    <File Path="src/MoneyKeeper.Identity/MoneyKeeper.Identity.http" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity/Endpoints/" />
+  <Folder Name="/src/MoneyKeeper.Identity/Extensions/">
+    <File Path="src/MoneyKeeper.Identity/Extensions/HealthChecksExtensions.cs" />
+    <File Path="src/MoneyKeeper.Identity/Extensions/ResultExtensions.cs" />
+  </Folder>
+  <Folder Name="/src/MoneyKeeper.Identity/Properties/">
+    <File Path="src/MoneyKeeper.Identity/Properties/launchSettings.json" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MoneyKeeper.Identity.Application.Tests/MoneyKeeper.Identity.Application.Tests.csproj" Id="ce54ee96-d0d9-4786-8f99-6831016f0174" />
+  </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+  <Project Path="src/MoneyKeeper.Identity.Application/MoneyKeeper.Identity.Application.csproj" />
+  <Project Path="src/MoneyKeeper.Identity.Core/MoneyKeeper.Identity.Core.csproj" />
+  <Project Path="src/MoneyKeeper.Identity.Infrastructure/MoneyKeeper.Identity.Infrastructure.csproj" />
+  <Project Path="src/MoneyKeeper.Identity/MoneyKeeper.Identity.csproj" />
 </Solution>

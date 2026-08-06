@@ -1,0 +1,39 @@
+services:
+  db:
+    container_name: database
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "timeout", "10s", "bash", "-c", "cat < /dev/null > /dev/tcp/localhost/1433"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+  identity:
+    depends_on:
+      db:
+        condition: service_healthy
+    container_name: identity
+    image: moneykeeper-identity
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__DefaultConnection=Server=db;Database=Identity;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true
+      - JwtOptions__SecretKey=${SECRET_JWT_KEY}
+    ports:
+      - "3000:8080"
+      - "3001:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  sql-data:
