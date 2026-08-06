@@ -12,7 +12,7 @@ namespace MoneyKeeper.Identity.Application.Tests
 
         public static LoginRequest LoginRequst => new("Email", "Password");
 
-        public static void SetupGetByEmail(this Mock<IIdentityRepository> mock, string email, User? value)
+        public static void SetupGetByEmail(this Mock<IUsersRepository> mock, string email, User? value)
         {
             mock.Setup(m => m.GetByEmailAsync(email, It.IsAny<CancellationToken>())).
                 ReturnsAsync(value);

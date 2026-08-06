@@ -4,18 +4,18 @@ using MoneyKeeper.Identity.Core.Entities;
 
 namespace MoneyKeeper.Identity.Infrastructure.Data.Repositories
 {
-    public class IdentityRepository : IIdentityRepository
+    public class UsersRepository : IUsersRepository
     {
         private readonly IdentityDbContext _db;
 
-        public IdentityRepository(IdentityDbContext db)
+        public UsersRepository(IdentityDbContext db)
         {
             _db = db;
         }
 
         public async Task AddAsync(User user, CancellationToken cancellationToken)
         {
-            user.CreatedAt = DateTime.Now;
+            user.CreatedAt = DateTime.UtcNow;
             await _db.Users.AddAsync(user, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
@@ -24,6 +24,12 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Repositories
         {
             return await _db.Users
                 .FirstOrDefaultAsync(u =>  u.Email == email, cancellationToken);
+        }
+
+        public async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken)
+        {
+            return await _db.Users
+                .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
         }
     }
 }

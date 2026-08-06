@@ -4,6 +4,10 @@ namespace MoneyKeeper.Identity.Application.Common.Interfaces
 {
     public interface IJwtService
     {
-        string Generate(User user);
+        string GenerateAccessToken(User user);
+
+        string GenerateRefreshToken();
+
+        string ComputeHash(string rawData);
     }
 }

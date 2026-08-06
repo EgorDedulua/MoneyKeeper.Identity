@@ -14,7 +14,7 @@ namespace MoneyKeeper.Identity.Core.Entities
 
         public DateTime CreatedAt { get; set; }
 
-        public DateTime? RevokedAt { get; set; }
+        public DateTime? RevokedAt { get; set; } = null;
 
         [NotMapped]
         public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;

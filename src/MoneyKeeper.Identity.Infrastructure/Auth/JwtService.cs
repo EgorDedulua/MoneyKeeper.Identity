@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace MoneyKeeper.Identity.Infrastructure.Auth
 {
@@ -17,11 +18,13 @@ namespace MoneyKeeper.Identity.Infrastructure.Auth
             _options = options;
         }
 
-        public string Generate(User user)
+        public string GenerateAccessToken(User user)
         {
             List<Claim> claims = new List<Claim>
             {
-                new Claim("UserId", user.Id.ToString())
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.UserName)
             };
 
             JwtSecurityToken token = new JwtSecurityToken(
@@ -35,6 +38,19 @@ namespace MoneyKeeper.Identity.Infrastructure.Auth
                     SecurityAlgorithms.HmacSha256));
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public string GenerateRefreshToken()
+        {
+            byte[] bytes = RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(bytes);
+        }
+
+        public string ComputeHash(string rawData)
+        {
+            using SHA256 sha256 = SHA256.Create();
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+            return Convert.ToBase64String(bytes);
         }
     }
 }

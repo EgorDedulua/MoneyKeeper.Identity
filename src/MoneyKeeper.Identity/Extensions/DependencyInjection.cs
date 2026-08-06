@@ -13,7 +13,7 @@ namespace MoneyKeeper.Identity.Extensions
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IJwtService, JwtService>();
-            services.AddScoped<IIdentityRepository, IdentityRepository>();
+            services.AddScoped<IUsersRepository, UsersRepository>();
             services.AddEndpointsApiExplorer();
             return services;
         }

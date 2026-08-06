@@ -12,14 +12,14 @@ namespace MoneyKeeper.Identity.Application.Tests
 {
     public class IdentityServiceTests
     {
-        private readonly Mock<IIdentityRepository> _identityRepositoryMock = new();
+        private readonly Mock<IUsersRepository> _usersRepositoryMock = new();
         private readonly Mock<IPasswordHasher> _passwordHasherMock = new();
         private readonly Mock<IJwtService> _jwtServiceMock = new();
 
         private IdentityService CreateService()
         {
             return new IdentityService(
-                _identityRepositoryMock.Object,
+                _usersRepositoryMock.Object,
                 _passwordHasherMock.Object,
                 _jwtServiceMock.Object
             );
@@ -29,7 +29,7 @@ namespace MoneyKeeper.Identity.Application.Tests
         public async Task Register_WhenEverythingIsCorrect_RegistersUser()
         {
             RegisterRequest request = IdentityServiceMockHelper.RegisterRequest;
-            _identityRepositoryMock.SetupGetByEmail(request.Email, null);
+            _usersRepositoryMock.SetupGetByEmail(request.Email, null);
             string token = "token";
             string hash = "hash";
             _passwordHasherMock.Setup(p => p.Hash(request.Password)).Returns(hash);
@@ -45,7 +45,7 @@ namespace MoneyKeeper.Identity.Application.Tests
             result.Value.Email.Should().Be(request.Email);
             _passwordHasherMock
                 .Verify(h => h.Hash(request.Password), Times.Once);
-            _identityRepositoryMock
+            _usersRepositoryMock
                 .Verify(r => r.AddAsync(It.Is<User>(u =>
                     u.Password == hash &&
                     u.Email == request.Email &&
@@ -63,7 +63,7 @@ namespace MoneyKeeper.Identity.Application.Tests
         public async Task Register_WhenUserEmailIsTaken_ReturnsConflictError()
         {
             RegisterRequest request = IdentityServiceMockHelper.RegisterRequest;
-            _identityRepositoryMock.SetupGetByEmail(request.Email, new User
+            _usersRepositoryMock.SetupGetByEmail(request.Email, new User
             {
                 Email = request.Email,
                 Password = request.Password,
@@ -78,7 +78,7 @@ namespace MoneyKeeper.Identity.Application.Tests
             result.Error.ErrorCode.Should().Be(ErrorCodes.EMAIL_ALREADY_TAKEN);
             _passwordHasherMock
                 .Verify(m => m.Hash(It.IsAny<string>()), Times.Never);
-            _identityRepositoryMock
+            _usersRepositoryMock
                 .Verify(m => m.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
             _jwtServiceMock
                 .Verify(m => m.Generate(It.IsAny<User>()), Times.Never);
@@ -96,7 +96,7 @@ namespace MoneyKeeper.Identity.Application.Tests
                 Password = hash,
                 UserName = "Name"
             };
-            _identityRepositoryMock.SetupGetByEmail(request.Email, user);
+            _usersRepositoryMock.SetupGetByEmail(request.Email, user);
             _passwordHasherMock.SetupVerifyPassword(hash, request.Password, true);
             _jwtServiceMock.SetupGenerate(token);
             IdentityService service = CreateService();
@@ -125,7 +125,7 @@ namespace MoneyKeeper.Identity.Application.Tests
                 UserName = "Name",
                 Email = requset.Email
             };
-            _identityRepositoryMock.SetupGetByEmail(requset.Email, user);
+            _usersRepositoryMock.SetupGetByEmail(requset.Email, user);
             _passwordHasherMock.SetupVerifyPassword(hash, requset.Password, false);
             IdentityService service = CreateService();
 
@@ -144,7 +144,7 @@ namespace MoneyKeeper.Identity.Application.Tests
         public async Task Login_WhenUserDoesNotExist_ReturnsUnauthorizedError()
         {
             LoginRequest request = IdentityServiceMockHelper.LoginRequst;
-            _identityRepositoryMock.SetupGetByEmail(request.Email, null);
+            _usersRepositoryMock.SetupGetByEmail(request.Email, null);
             IdentityService service = CreateService();
 
             Result<AuthResult> result = await service.Login(request, CancellationToken.None);
