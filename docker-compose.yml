@@ -20,7 +20,7 @@ services:
       db:
         condition: service_healthy
     container_name: identity
-    image: moneykeeper-identity
+    image: darv1nnn/moneykeeper-identity:latest
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ConnectionStrings__DefaultConnection=Server=db;Database=Identity;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true

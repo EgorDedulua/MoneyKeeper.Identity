@@ -13,6 +13,7 @@ namespace MoneyKeeper.Identity
             builder.Services.AddDb(builder.Configuration);
             builder.Services.AddOpenApi();
             builder.Services.AddAppHealthChecks();
+            builder.Services.AddAppAuthorization(builder.Configuration);
             var app = builder.Build();
             app.MigrateDb();
             if (app.Environment.IsDevelopment())

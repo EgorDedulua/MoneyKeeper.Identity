@@ -2,6 +2,7 @@
 using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
 using MoneyKeeper.Identity.Extensions;
+using MoneyKeeper.Identity.Filters;
 
 namespace MoneyKeeper.Identity.Endpoints
 {
@@ -21,7 +22,7 @@ namespace MoneyKeeper.Identity.Endpoints
                 }
 
                 return result.ToErrorResult();
-            });
+            }).WithValidation<RegisterRequest>();
 
             app.MapPost("api/auth/login", async (LoginRequest request, IIdentityService identityService, 
                 HttpContext httpContext, IMapper mapper, CancellationToken ct) =>
@@ -35,7 +36,7 @@ namespace MoneyKeeper.Identity.Endpoints
                 }
 
                 return result.ToErrorResult();
-            });
+            }).WithValidation<LoginRequest>();
 
             app.MapPost("api/auth/refresh", async (IIdentityService identityService, HttpContext httpContext, CancellationToken ct) =>
             {

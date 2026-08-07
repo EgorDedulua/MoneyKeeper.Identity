@@ -33,6 +33,10 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
             builder
                 .Property(t => t.ExpiresAt)
                 .IsRequired();
+
+            builder
+                .Ignore(t => t.IsActive)
+                .Ignore(t => t.IsReplaced);
         }
     }
 }
