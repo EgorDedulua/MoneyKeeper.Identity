@@ -43,7 +43,8 @@ namespace MoneyKeeper.Identity.Application.Services
                 TokenHash = _jwtService.ComputeHash(refreshToken),
                 UserId = user.Id,
                 ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshTokenEntity, cancellationToken);
             await _refreshTokensRepository.RevokeAllUserTokensAsync(user.Id, cancellationToken);
@@ -76,7 +77,8 @@ namespace MoneyKeeper.Identity.Application.Services
                 TokenHash = _jwtService.ComputeHash(refreshToken),
                 UserId = user.Id,
                 ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshTokenEntity, cancellationToken);
             AuthResult response = new AuthResult(user.Email, user.UserName, user.Id, user.CreatedAt, accessToken, refreshToken);
@@ -126,7 +128,7 @@ namespace MoneyKeeper.Identity.Application.Services
             string newAccessToken = _jwtService.GenerateAccessToken(user);
             string newRefreshToken = _jwtService.GenerateRefreshToken();
             string newHash = _jwtService.ComputeHash(newRefreshToken);
-            await _refreshTokensRepository.RefreshToken(storedToken, newHash, cancellationToken);
+            await _refreshTokensRepository.RefreshToken(storedToken.Id, newHash, cancellationToken);
             _logger.LogInformation("Обновлен refresh token для пользователя с id {UserId}", storedToken.UserId);
 
             return Result<AccessTokenUpdateResponse>.Success
@@ -145,10 +147,13 @@ namespace MoneyKeeper.Identity.Application.Services
                 await _refreshTokensRepository.GetByHashAsync(hash, cancellationToken);
             if (storedToken is not null && !storedToken.IsReplaced)
             {
-                await _refreshTokensRepository.RevokeTokenAsync(storedToken, cancellationToken);
+                await _refreshTokensRepository.RevokeTokenAsync(storedToken.Id, cancellationToken);
                 _logger.LogInformation("Пользователь с id {UserId} вышел из своего аккаунта", storedToken.UserId);
             }
-            _logger.LogDebug("Попытка выхода из аккаунта с невалидным токеноа - проигнорировано");
+            else
+            {
+                _logger.LogDebug("Попытка выхода из аккаунта с невалидным токеноа - проигнорировано");
+            }
         }
     }
 }

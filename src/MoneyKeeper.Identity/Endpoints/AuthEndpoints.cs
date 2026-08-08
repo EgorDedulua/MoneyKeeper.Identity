@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
+using MoneyKeeper.Identity.Contracts;
 using MoneyKeeper.Identity.Extensions;
 using MoneyKeeper.Identity.Filters;
 
@@ -8,6 +9,8 @@ namespace MoneyKeeper.Identity.Endpoints
 {
     public static class AuthEndpoints
     {
+        private const string RefreshTokenCookie = "refreshToken";
+
         public static void MapAuthEndpoints(this WebApplication app)
         {
             app.MapPost("api/auth/register", async (RegisterRequest request, IIdentityService identityService, 
@@ -18,7 +21,7 @@ namespace MoneyKeeper.Identity.Endpoints
                 if (result.IsSuccess)
                 {
                     SetRefreshTokenCookie(httpContext, result.Value.RefreshToken);
-                    return Results.Ok(mapper.Map<AuthResult>(result.Value));
+                    return Results.Ok(mapper.Map<AuthResponse>(result.Value));
                 }
 
                 return result.ToErrorResult();
@@ -32,7 +35,7 @@ namespace MoneyKeeper.Identity.Endpoints
                 if (result.IsSuccess)
                 {
                     SetRefreshTokenCookie(httpContext, result.Value.RefreshToken);
-                    return Results.Ok(mapper.Map<AuthResult>(result.Value));
+                    return Results.Ok(mapper.Map<AuthResponse>(result.Value));
                 }
 
                 return result.ToErrorResult();
@@ -40,37 +43,48 @@ namespace MoneyKeeper.Identity.Endpoints
 
             app.MapPost("api/auth/refresh", async (IIdentityService identityService, HttpContext httpContext, CancellationToken ct) =>
             {
-                string? refreshToken = httpContext.Request.Cookies["refreshToken"];
+                string? refreshToken = httpContext.Request.Cookies[RefreshTokenCookie];
                 var result = await identityService.Refresh(refreshToken, ct);
 
                 if (result.IsSuccess)
                 {
                     SetRefreshTokenCookie(httpContext, result.Value.RefreshToken);
-                    return Results.Ok(result.Value.AccessToken);
+                    return Results.Ok(new { accessToken = result.Value.AccessToken });
                 }
 
-                httpContext.Response.Cookies.Delete("refreshToken");
                 return result.ToErrorResult();
             });
 
             app.MapPost("api/auth/logout", async (IIdentityService identityService, HttpContext httpContext, CancellationToken ct) =>
             {
-                string? refreshToken = httpContext.Request.Cookies["refreshToken"];
+                string? refreshToken = httpContext.Request.Cookies[RefreshTokenCookie];
                 await identityService.Logout(refreshToken, ct);
-                httpContext.Response.Cookies.Delete("refreshToken");
+                RemoveRefreshTokenCookie(httpContext);
                 return Results.Ok();
             });
         }
 
         private static void SetRefreshTokenCookie(HttpContext httpContext, string refreshToken)
         {
+            RemoveRefreshTokenCookie(httpContext);
             httpContext.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 Expires = DateTime.UtcNow.AddDays(7),
-                SameSite = SameSiteMode.Strict,
-                Path = "api/auth"
+                SameSite = SameSiteMode.None,
+                Path = "/api/auth"
+            });
+        }
+
+        private static void RemoveRefreshTokenCookie(HttpContext httpContext)
+        {
+            httpContext.Response.Cookies.Delete("", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None, 
+                Path = "/api/auth"
             });
         }
     }

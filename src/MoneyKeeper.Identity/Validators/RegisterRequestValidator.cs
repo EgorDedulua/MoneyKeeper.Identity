@@ -17,9 +17,8 @@ namespace MoneyKeeper.Identity.Validators
                 .NotEmpty().WithMessage("Пароль обязателен").WithErrorCode(ErrorCodes.PASSWORD_IS_EMPTY)
                 .MinimumLength(8).WithMessage("Пароль не может быть короче 8 символов").WithErrorCode(ErrorCodes.PASSWORD_IS_TOO_SHORT)
                 .MaximumLength(100).WithMessage("Пароль не может быть длиннее 100 символов").WithErrorCode(ErrorCodes.PASSWORD_IS_TOO_LONG)
-                .Matches("[A-Z]").WithMessage("Пароль должен содержать заглавную латинскую букву").WithErrorCode(ErrorCodes.PASSWORD_IS_UNSAFE).Matches("[A-Z]").WithMessage("Пароль должен содержать заглавную латинскую букву").WithErrorCode(ErrorCodes.PASSWORD_IS_UNSAFE)
-                .Matches("[a-z]").WithMessage("Пароль должен содержать заглавную латинскую букву").WithErrorCode(ErrorCodes.PASSWORD_IS_UNSAFE)
-                .Matches("[A-Z]").WithMessage("Пароль должен содержать строчную латинскую букву").WithErrorCode(ErrorCodes.PASSWORD_IS_UNSAFE)
+                .Matches("[A-Z]").WithMessage("Пароль должен содержать заглавную латинскую букву").WithErrorCode(ErrorCodes.PASSWORD_IS_UNSAFE)
+                .Matches("[a-z]").WithMessage("Пароль должен содержать строчную латинскую букву").WithErrorCode(ErrorCodes.PASSWORD_IS_UNSAFE)
                 .Matches("[0-9]").WithMessage("Пароль должен содержать цифру").WithErrorCode(ErrorCodes.PASSWORD_IS_UNSAFE);
 
             RuleFor(x => x.UserName)
