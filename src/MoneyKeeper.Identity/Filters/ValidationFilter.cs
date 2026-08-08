@@ -4,7 +4,7 @@ namespace MoneyKeeper.Identity.Filters
 {
     public static class ValidationFilter
     {
-        public static RouteHandlerBuilder WithValidation<T>(this RouteHandlerBuilder builder)
+        public static RouteHandlerBuilder WithValidation<T> (this RouteHandlerBuilder builder)
         {
             builder.AddEndpointFilter(async (context, next) =>
             {
@@ -12,8 +12,7 @@ namespace MoneyKeeper.Identity.Filters
                 if (request is null)
                     throw new InvalidOperationException(
                         $"Validation filter for {typeof(T).Name} failed: " +
-                        $"no parameter of type {typeof(T).Name} was found in the endpoint handler. " +
-                        $"Make sure the endpoint has a parameter of type {typeof(T).Name} decorated with [FromBody].");
+                        $"no parameter of type {typeof(T).Name} was found in the endpoint handler.");
 
                 var validator = context.HttpContext.RequestServices.GetService<IValidator<T>>();
                 if (validator is not null)
@@ -22,14 +21,26 @@ namespace MoneyKeeper.Identity.Filters
                     if (!validationResult.IsValid)
                     {
                         var errors = validationResult.Errors
-                            .Select(e => new { Field = e.PropertyName, Message = e.ErrorMessage, ErrorCode = e.ErrorCode });
-                        return Results.BadRequest(errors);
+                            .GroupBy(e => e.PropertyName)
+                            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+
+                        var errorCodes = validationResult.Errors
+                            .GroupBy(e => e.PropertyName)
+                            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorCode).ToArray());
+
+                        return Results.ValidationProblem(
+                            title: "Validation error",
+                            errors: errors,
+                            extensions: new Dictionary<string, object?>
+                            {
+                                ["errorCodes"] = errorCodes
+                            }
+                        );
                     }
                 }
 
                 return await next(context);
             });
-
             return builder;
         }
     }

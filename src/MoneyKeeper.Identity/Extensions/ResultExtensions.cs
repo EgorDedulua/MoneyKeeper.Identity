@@ -6,28 +6,33 @@ namespace MoneyKeeper.Identity.Extensions
     {
         public static IResult ToErrorResult<T>(this Result<T> result)
         {
+            if (result is null)
+                throw new InvalidOperationException("ToErrorActionResult called on null result");
+
             if (result.IsSuccess)
-                throw new ArgumentException("ToErrorActionResult called on successful result. " +
+                throw new InvalidOperationException("ToErrorActionResult called on successful result. " +
                     "Handle success case explicitly with Ok(), Created(), etc.");
 
-            if (result is null)
-                throw new ArgumentNullException("ToErrorActionResult called on null result");
-
             if (result.Error is null)
-                throw new ArgumentNullException("ToErrorActionResult called on null Error property of result");
+                throw new InvalidOperationException("ToErrorActionResult called on null Error property of result");
 
-            object error = new 
-            {
-                error = result.Error.Message,
-                code = result.Error.ErrorCode
-            };
-
-            return result.Error.StatusCode switch
-            {
-                400 => Results.BadRequest(error),
-                409 => Results.Conflict(error),
-                _ => Results.Json(error, statusCode: result.Error.StatusCode)
-            };
+            return Results.Problem(
+                title: result.Error.StatusCode.ToErrorTitle(),
+                detail: result.Error.Message,
+                statusCode: result.Error.StatusCode,
+                extensions: new Dictionary<string, object?>
+                {
+                    ["errorCode"] = result.Error.ErrorCode
+                }
+            );
         }
+
+        private static string ToErrorTitle(this int statusCode) => statusCode switch
+        {
+            400 => "Bad request",
+            401 => "Unauthorized",
+            409 => "Conflict",
+            _ => "Unexpected error"
+        };
     }
 }
