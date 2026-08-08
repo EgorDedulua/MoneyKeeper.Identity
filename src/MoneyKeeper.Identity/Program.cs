@@ -1,6 +1,7 @@
 using MoneyKeeper.Identity.Endpoints;
 using MoneyKeeper.Identity.ExceptionHandlers;
 using MoneyKeeper.Identity.Extensions;
+using MoneyKeeper.Identity.Middlewares;
 using Serilog;
 
 namespace MoneyKeeper.Identity
@@ -26,6 +27,7 @@ namespace MoneyKeeper.Identity
             }
 
             app.UseExceptionHandler();
+            app.UseMiddleware<LogContextEnrichmentMiddleware>();
             app.UseAppRequestLogging();
             app.UseHttpsRedirection();
             app.UseAuthentication();
