@@ -40,8 +40,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
                 .IsRequired();
 
             builder
-                .Ignore(t => t.IsActive)
-                .Ignore(t => t.IsReplaced);
+                .Ignore(t => t.IsActive);
         }
     }
 }

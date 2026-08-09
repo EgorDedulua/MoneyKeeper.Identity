@@ -67,7 +67,7 @@ namespace MoneyKeeper.Identity.Endpoints
         private static void SetRefreshTokenCookie(HttpContext httpContext, string refreshToken)
         {
             RemoveRefreshTokenCookie(httpContext);
-            httpContext.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            httpContext.Response.Cookies.Append(RefreshTokenCookie, refreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
@@ -79,7 +79,7 @@ namespace MoneyKeeper.Identity.Endpoints
 
         private static void RemoveRefreshTokenCookie(HttpContext httpContext)
         {
-            httpContext.Response.Cookies.Delete("", new CookieOptions
+            httpContext.Response.Cookies.Delete(RefreshTokenCookie, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,

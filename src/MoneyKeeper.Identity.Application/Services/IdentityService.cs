@@ -46,8 +46,8 @@ namespace MoneyKeeper.Identity.Application.Services
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
-            await _refreshTokensRepository.AddRefreshTokenAsync(refreshTokenEntity, cancellationToken);
             await _refreshTokensRepository.RevokeAllUserTokensAsync(user.Id, cancellationToken);
+            await _refreshTokensRepository.AddRefreshTokenAsync(refreshTokenEntity, cancellationToken);
             AuthResult response = new AuthResult(user.Email, user.UserName, user.Id, user.CreatedAt, accessToken, refreshToken);
             _logger.LogInformation("Пользователь с id {UserId} успешно вошел в свой аккаунт", user.Id);
 
@@ -110,7 +110,7 @@ namespace MoneyKeeper.Identity.Application.Services
 
             RefreshToken? storedToken =
                 await _refreshTokensRepository.GetByHashAsync(hash, cancellationToken);
-            if (storedToken is null || !storedToken.IsActive || storedToken.IsReplaced)
+            if (storedToken is null || !storedToken.IsActive)
             {
                 _logger.LogWarning("Попытка обновления с невалидным refresh token с хешем {TokenHash}", hash);
                 return Result<AccessTokenUpdateResponse>.Failure
@@ -145,7 +145,7 @@ namespace MoneyKeeper.Identity.Application.Services
             string hash = _jwtService.ComputeHash(refreshToken);
             RefreshToken? storedToken =
                 await _refreshTokensRepository.GetByHashAsync(hash, cancellationToken);
-            if (storedToken is not null && !storedToken.IsReplaced)
+            if (storedToken is not null && storedToken.IsActive)
             {
                 await _refreshTokensRepository.RevokeTokenAsync(storedToken.Id, cancellationToken);
                 _logger.LogInformation("Пользователь с id {UserId} вышел из своего аккаунта", storedToken.UserId);

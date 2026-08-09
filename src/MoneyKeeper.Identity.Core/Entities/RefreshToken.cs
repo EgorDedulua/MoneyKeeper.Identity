@@ -23,9 +23,6 @@ namespace MoneyKeeper.Identity.Core.Entities
         [NotMapped]
         public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;
 
-        [NotMapped]
-        public bool IsReplaced => PreviousTokenHash is not null;
-
         public User User { get; set; } = null!;
     }
 }
