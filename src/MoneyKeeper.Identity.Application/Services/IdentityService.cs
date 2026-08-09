@@ -152,7 +152,7 @@ namespace MoneyKeeper.Identity.Application.Services
             }
             else
             {
-                _logger.LogDebug("Попытка выхода из аккаунта с невалидным токеноа - проигнорировано");
+                _logger.LogDebug("Попытка выхода из аккаунта с невалидным токеном - проигнорировано");
             }
         }
     }
