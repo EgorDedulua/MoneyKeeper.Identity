@@ -6,7 +6,7 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${SA_PASSWORD}
     ports:
-      - "1433:1433"
+      - "1434:1433"
     volumes:
       - sql-data:/var/opt/mssql
     healthcheck:
@@ -20,7 +20,7 @@ services:
       db:
         condition: service_healthy
     container_name: identity
-    image: moneykeeper-identity
+    image: darv1nnn/moneykeeper-identity:latest
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ConnectionStrings__DefaultConnection=Server=db;Database=Identity;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true

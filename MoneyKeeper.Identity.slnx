@@ -56,7 +56,7 @@
     <File Path="src/MoneyKeeper.Identity/Properties/launchSettings.json" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/MoneyKeeper.Identity.Application.Tests/MoneyKeeper.Identity.Application.Tests.csproj" Id="ce54ee96-d0d9-4786-8f99-6831016f0174" />
+    <Project Path="tests/MoneyKeeper.Identity.UnitTests/MoneyKeeper.Identity.UnitTests.csproj" Id="ce54ee96-d0d9-4786-8f99-6831016f0174" />
   </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
@@ -65,4 +65,5 @@
   <Project Path="src/MoneyKeeper.Identity.Core/MoneyKeeper.Identity.Core.csproj" />
   <Project Path="src/MoneyKeeper.Identity.Infrastructure/MoneyKeeper.Identity.Infrastructure.csproj" />
   <Project Path="src/MoneyKeeper.Identity/MoneyKeeper.Identity.csproj" />
+  <Project Path="tests/MoneyKeeper.Identity.IntegrationTests/MoneyKeeper.Identity.IntegrationTests.csproj" Id="5cac4e73-cdaa-43d3-9c02-ee273be62d8c" />
 </Solution>

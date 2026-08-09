@@ -4,6 +4,8 @@ namespace MoneyKeeper.Identity.Core.Entities
 {
     public class RefreshToken
     {
+        public int Id { get; set; }
+
         public string TokenHash { get; set; } = string.Empty;
 
         public int UserId { get; set; }
@@ -14,13 +16,12 @@ namespace MoneyKeeper.Identity.Core.Entities
 
         public DateTime CreatedAt { get; set; }
 
-        public DateTime? RevokedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+
+        public DateTime? RevokedAt { get; set; } = null;
 
         [NotMapped]
         public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;
-
-        [NotMapped]
-        public bool IsReplaced => PreviousTokenHash is not null;
 
         public User User { get; set; } = null!;
     }

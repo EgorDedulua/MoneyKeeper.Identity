@@ -17,7 +17,7 @@ namespace MoneyKeeper.Identity.Extensions
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-                context.Database.Migrate();
+                context.Database.EnsureCreated();
             }
             return app;
         }

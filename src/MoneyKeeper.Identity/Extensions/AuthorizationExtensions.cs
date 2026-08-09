@@ -7,7 +7,7 @@ namespace MoneyKeeper.Identity.Extensions
 {
     public static class AuthorizationExtensions
     {
-        public static IServiceCollection AddAuthorization(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddAppAuthorization(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -25,6 +25,7 @@ namespace MoneyKeeper.Identity.Extensions
                             Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
                     };
                 });
+            services.AddAuthorization();
             return services;
         }
     }

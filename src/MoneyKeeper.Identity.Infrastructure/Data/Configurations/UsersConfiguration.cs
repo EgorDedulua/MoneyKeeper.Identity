@@ -21,13 +21,11 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
 
             builder
                 .Property(u => u.Password)
-                .IsRequired()
-                .HasMaxLength(50);
+                .IsRequired();
 
             builder
                 .Property(u => u.UserName)
-                .IsRequired()
-                .HasMaxLength(50);
+                .IsRequired();
 
             builder
                 .Property(u => u.CreatedAt)

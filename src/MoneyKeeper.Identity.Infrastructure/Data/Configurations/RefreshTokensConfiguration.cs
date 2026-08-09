@@ -9,16 +9,16 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
         public void Configure(EntityTypeBuilder<RefreshToken> builder)
         {
             builder
-                .HasKey(t => t.TokenHash);
+                .HasKey(t => t.Id);
+
+            builder
+                .HasIndex(t => t.TokenHash)
+                .IsUnique();
 
             builder
                 .HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId);
-
-            builder
-                .HasIndex(t => new { t.UserId, t.IsActive })
-                .HasFilter("[RevokedAt] IS NOT NULL");
 
             builder
                 .HasIndex(t => t.PreviousTokenHash)
@@ -31,8 +31,16 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
                 .HasDefaultValue(DateTime.UtcNow);
 
             builder
+                .Property(t => t.UpdatedAt)
+                .IsRequired()
+                .HasDefaultValue(DateTime.UtcNow);
+
+            builder
                 .Property(t => t.ExpiresAt)
                 .IsRequired();
+
+            builder
+                .Ignore(t => t.IsActive);
         }
     }
 }
