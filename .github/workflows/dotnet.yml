@@ -28,7 +28,7 @@ jobs:
         run: dotnet build src/MoneyKeeper.Identity/MoneyKeeper.Identity.csproj --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test tests/MoneyKeeper.Identity.UnitTests/MoneyKeeper.Identity.UnitTests.csproj --no-build --configuration Release --verbosity normal
+        run: dotnet test tests/MoneyKeeper.Identity.UnitTests/MoneyKeeper.Identity.UnitTests.csproj --configuration Release --verbosity normal
 
   build-and-push-docker-image:
     runs-on: ubuntu-latest
@@ -47,7 +47,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
