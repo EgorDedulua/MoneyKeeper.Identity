@@ -28,7 +28,7 @@ jobs:
         run: dotnet build src/MoneyKeeper.Identity/MoneyKeeper.Identity.csproj --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test MoneyKeeper.slnx --no-build --configuration Release --verbosity normal
+        run: dotnet test tests/MoneyKeeper.Identity.UnitTests/MoneyKeeper.Identity.UnitTests.csproj --no-build --configuration Release --verbosity normal
 
   build-and-push-docker-image:
     runs-on: ubuntu-latest
