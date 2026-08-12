@@ -136,14 +136,15 @@ namespace MoneyKeeper.Identity.IntegrationTests
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
             string newHash = "newHash";
             string oldHash = refreshToken.TokenHash;
+            DateTime beforeRefresh = DateTime.UtcNow;
 
             await _refreshTokensRepository.RefreshTokenAsync(refreshToken.Id, newHash, CancellationToken.None);
 
             RefreshToken fromDb = await _context.RefreshTokens.FirstAsync(t => t.Id == refreshToken.Id);
             fromDb.Should().NotBeNull();
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
-            fromDb.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
-            fromDb.ExpiresAt.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromSeconds(10));
+            fromDb.UpdatedAt.Should().BeCloseTo(beforeRefresh, TimeSpan.FromSeconds(10));  
+            fromDb.ExpiresAt.Should().BeCloseTo(beforeRefresh.AddDays(7), TimeSpan.FromSeconds(10)); 
             fromDb.RevokedAt.Should().Be(refreshToken.RevokedAt);
             fromDb.PreviousTokenHash.Should().Be(oldHash);
             fromDb.TokenHash.Should().Be(newHash);
@@ -167,6 +168,7 @@ namespace MoneyKeeper.Identity.IntegrationTests
             await _refreshTokensRepository.RevokeAllUserTokensAsync(firstUser.Id, CancellationToken.None);
 
             List<RefreshToken> revokedTokens = await _context.RefreshTokens
+                .AsNoTracking()
                 .Where(t => t.UserId == firstUser.Id)
                 .ToListAsync();
             revokedTokens.Should().HaveCount(2);
@@ -197,9 +199,14 @@ namespace MoneyKeeper.Identity.IntegrationTests
 
             await _refreshTokensRepository.RevokeAllUserTokensAsync(firstUser.Id, CancellationToken.None);
 
-            List<RefreshToken> revokedTokens = await _context.RefreshTokens
-                .Where(t => t.UserId == firstUser.Id && DateTime.UtcNow - t.RevokedAt >= TimeSpan.FromSeconds(0))
+            List<RefreshToken> allUserTokens = await _context.RefreshTokens
+                .AsNoTracking()
+                .Where(t => t.UserId == firstUser.Id)
                 .ToListAsync();
+
+            List<RefreshToken> revokedTokens = allUserTokens
+                .Where(t => t.RevokedAt.HasValue && DateTime.UtcNow - t.RevokedAt.Value >= TimeSpan.Zero)
+                .ToList();
             revokedTokens.Should().HaveCount(1);
             revokedTokens.ForEach(t => t.UserId.Should().Be(firstUser.Id));
             revokedTokens.ForEach(t => t.CreatedAt.Should().Be(validRefreshToken.CreatedAt));

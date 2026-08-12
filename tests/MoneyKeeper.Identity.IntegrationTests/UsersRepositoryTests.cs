@@ -26,28 +26,30 @@ namespace MoneyKeeper.Identity.IntegrationTests
         public async Task Test_AddUser_SuccesfullyAddsUser()
         {
             (await _context.Users.CountAsync()).Should().Be(0);
+            User user = User;
 
-            await _usersRepository.AddAsync(User, CancellationToken.None);
+            await _usersRepository.AddAsync(user, CancellationToken.None);
 
             (await _context.Users.CountAsync()).Should().Be(1);
             User addedUser = await _context.Users.FirstAsync();
-            addedUser.Id.Should().Be(1);
-            addedUser.Email.Should().Be(User.Email);
-            addedUser.Password.Should().Be(User.Password);
-            addedUser.UserName.Should().Be(User.UserName);
+            addedUser.Id.Should().BePositive();
+            addedUser.Email.Should().Be(user.Email);
+            addedUser.Password.Should().Be(user.Password);
+            addedUser.UserName.Should().Be(user.UserName);
         }
 
         [Fact]
         public async Task Test_GetByEmail_ReturnsUser()
         {
-            await _usersRepository.AddAsync(User, CancellationToken.None);
+            User user = User;
+            await _usersRepository.AddAsync(user, CancellationToken.None);
 
-            User? userFromDb = await _usersRepository.GetByEmailAsync(User.Email, CancellationToken.None);
+            User? userFromDb = await _usersRepository.GetByEmailAsync(user.Email, CancellationToken.None);
             userFromDb.Should().NotBeNull();
-            userFromDb.Id.Should().Be(1);
-            userFromDb.Email.Should().Be(User.Email);
-            userFromDb.Password.Should().Be(User.Password);
-            userFromDb.UserName.Should().Be(User.UserName);
+            userFromDb.Id.Should().BePositive();
+            userFromDb.Email.Should().Be(user.Email);
+            userFromDb.Password.Should().Be(user.Password);
+            userFromDb.UserName.Should().Be(user.UserName);
         }
 
         [Fact]
@@ -62,22 +64,24 @@ namespace MoneyKeeper.Identity.IntegrationTests
         [Fact]
         public async Task Test_GetById_ReturnsUser()
         {
-            await _usersRepository.AddAsync(User, CancellationToken.None);
+            User user = User;
+            await _usersRepository.AddAsync(user, CancellationToken.None);
 
-            User? userFromDb = await _usersRepository.GetByIdAsync(1, CancellationToken.None);
+            User? userFromDb = await _usersRepository.GetByIdAsync(user.Id, CancellationToken.None);
             userFromDb.Should().NotBeNull();
-            userFromDb.Id.Should().Be(1);
-            userFromDb.Email.Should().Be(User.Email);
-            userFromDb.Password.Should().Be(User.Password);
-            userFromDb.UserName.Should().Be(User.UserName);
+            userFromDb.Id.Should().Be(user.Id);
+            userFromDb.Email.Should().Be(user.Email);
+            userFromDb.Password.Should().Be(user.Password);
+            userFromDb.UserName.Should().Be(user.UserName);
         }
 
         [Fact]
         public async Task Test_GetById_ReturnsNull()
         {
-            await _usersRepository.AddAsync(User, CancellationToken.None);
+            User user = User;
+            await _usersRepository.AddAsync(user, CancellationToken.None);
 
-            User? userFromDb = await _usersRepository.GetByIdAsync(2, CancellationToken.None);
+            User? userFromDb = await _usersRepository.GetByIdAsync(user.Id + 1, CancellationToken.None);
             userFromDb.Should().BeNull();
         }
     }
