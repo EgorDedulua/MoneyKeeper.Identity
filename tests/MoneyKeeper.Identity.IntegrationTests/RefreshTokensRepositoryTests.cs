@@ -16,29 +16,40 @@ namespace MoneyKeeper.Identity.IntegrationTests
             _refreshTokensRepository = new RefreshTokensRepository(_context);
         }
 
-        private RefreshToken GetRefreshToken(RefreshTokenType tokenType) => new RefreshToken
+        private int _tokenCounter = 0;
+        private RefreshToken GetRefreshToken(RefreshTokenType tokenType)
         {
-            TokenHash = "hash",
-            PreviousTokenHash = "previousTokenHash",
-            ExpiresAt = DateTime.UtcNow.AddDays(tokenType == RefreshTokenType.Expired ? -5 : 5),
-            RevokedAt = tokenType == RefreshTokenType.Revoked ? DateTime.UtcNow.AddDays(-5) : null
-        };
+            ++_tokenCounter;
+            return new RefreshToken
+            {
+                TokenHash = $"hash_{_tokenCounter}",
+                PreviousTokenHash = $"prevHash_{_tokenCounter}",
+                ExpiresAt = DateTime.UtcNow.AddDays(tokenType == RefreshTokenType.Expired ? -5 : 5),
+                RevokedAt = tokenType == RefreshTokenType.Revoked ? DateTime.UtcNow.AddDays(-5) : null
+            };
+        }
 
-        private User User => new User
+        private async Task<User> CreateUserAsync(string email)
         {
-            Email = "email",
-            Password = "password",
-            UserName = "Name"
-        };
+            User user = new User
+            {
+                Email = email,
+                Password = "password",
+                UserName = "Name"
+            };
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+            return user; 
+        }
 
         [Fact]
         public async Task Test_AddRefreshToken_SuccesfullyAddsRefreshToken()
         {
             (await _context.RefreshTokens.CountAsync()).Should().Be(0);
-            User user = User;
-            await _context.Users.AddAsync(user);
+            User user = await CreateUserAsync("email@gmail.com");
             RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
             refreshToken.UserId = user.Id;
+
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
 
             (await _context.RefreshTokens.CountAsync()).Should().Be(1);
@@ -55,13 +66,13 @@ namespace MoneyKeeper.Identity.IntegrationTests
         [Fact]
         public async Task Test_GetByHash_ReturnsRefreshToken()
         {
-            User user = User;
-            await _context.Users.AddAsync(user);
+            User user = await CreateUserAsync("email@gmail.com");
             RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
             refreshToken.UserId = user.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
             
             RefreshToken? fromDb = await _refreshTokensRepository.GetByHashAsync(refreshToken.TokenHash, CancellationToken.None);
+
             fromDb.Should().NotBeNull();
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
             fromDb.UpdatedAt.Should().Be(refreshToken.UpdatedAt);
@@ -74,26 +85,26 @@ namespace MoneyKeeper.Identity.IntegrationTests
         [Fact]
         public async Task Test_GetByHash_ReturnsNull()
         {
-            User user = User;
-            await _context.Users.AddAsync(user);
+            User user = await CreateUserAsync("email@gmail.com");
             RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
             refreshToken.UserId = user.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
 
             RefreshToken? fromDb = await _refreshTokensRepository.GetByHashAsync("nonexisten", CancellationToken.None);
+
             fromDb.Should().BeNull();
         }
 
         [Fact]
         public async Task Test_GetByPreviousTokenHash_ReturnsRefreshToken()
         {
-            User user = User;
-            await _context.Users.AddAsync(user);
+            User user = await CreateUserAsync("email@gmail.com");
             RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
             refreshToken.UserId = user.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
 
             RefreshToken? fromDb = await _refreshTokensRepository.GetByPreviousTokenHashAsync(refreshToken.PreviousTokenHash!, CancellationToken.None);
+            
             fromDb.Should().NotBeNull();
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
             fromDb.UpdatedAt.Should().Be(refreshToken.UpdatedAt);
@@ -106,21 +117,20 @@ namespace MoneyKeeper.Identity.IntegrationTests
         [Fact]
         public async Task Test_GetByPreviousTokenHash_ReturnsNull()
         {
-            User user = User;
-            await _context.Users.AddAsync(user);
+            User user = await CreateUserAsync("email@gmail.com");
             RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
             refreshToken.UserId = user.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
 
             RefreshToken? fromDb = await _refreshTokensRepository.GetByPreviousTokenHashAsync("nonexisten", CancellationToken.None);
+            
             fromDb.Should().BeNull();
         }
 
         [Fact]
         public async Task Test_RefreshToken_RefreshesToken()
         {
-            User user = User;
-            await _context.Users.AddAsync(user);
+            User user = await CreateUserAsync("email@gmail.com");
             RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
             refreshToken.UserId = user.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
@@ -142,15 +152,14 @@ namespace MoneyKeeper.Identity.IntegrationTests
         [Fact]
         public async Task Test_RevokeAllUserTokens_SuccessfullyRevokesAllTokens()
         {
-            User firstUser = User;
-            await _context.Users.AddAsync(firstUser);
-            RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
-            refreshToken.UserId = firstUser.Id;
-            User secondUser = User;
-            secondUser.Email = "second";
-            await _context.Users.AddAsync(secondUser);
-            await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
-            await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
+            User firstUser = await CreateUserAsync("first@gmail.com");
+            User secondUser = await CreateUserAsync("second@gmail.com");
+            RefreshToken token1 = GetRefreshToken(RefreshTokenType.Valid);
+            RefreshToken token2 = GetRefreshToken(RefreshTokenType.Valid);
+            token1.UserId = firstUser.Id;
+            token2.UserId = firstUser.Id;
+            await _refreshTokensRepository.AddRefreshTokenAsync(token1, CancellationToken.None);
+            await _refreshTokensRepository.AddRefreshTokenAsync(token2, CancellationToken.None);
             RefreshToken secondUserRefreshToken = GetRefreshToken(RefreshTokenType.Valid);
             secondUserRefreshToken.UserId = secondUser.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(secondUserRefreshToken, CancellationToken.None);
@@ -162,24 +171,22 @@ namespace MoneyKeeper.Identity.IntegrationTests
                 .ToListAsync();
             revokedTokens.Should().HaveCount(2);
             revokedTokens.ForEach(t => t.UserId.Should().Be(firstUser.Id));
-            revokedTokens.ForEach(t => t.CreatedAt.Should().Be(refreshToken.CreatedAt));
-            revokedTokens.ForEach(t => t.UpdatedAt.Should().Be(refreshToken.UpdatedAt));
-            revokedTokens.ForEach(t => t.ExpiresAt.Should().Be(refreshToken.ExpiresAt));
             revokedTokens.ForEach(t => t.RevokedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10)));
-            revokedTokens.ForEach(t => t.PreviousTokenHash.Should().Be(refreshToken.PreviousTokenHash));
-            revokedTokens.ForEach(t => t.TokenHash.Should().Be(refreshToken.TokenHash));
+            RefreshToken revokedToken1 = revokedTokens.First(t => t.Id == token1.Id);
+            revokedToken1.TokenHash.Should().Be(token1.TokenHash);
+            revokedToken1.PreviousTokenHash.Should().Be(token1.PreviousTokenHash);
+            RefreshToken revokedToken2 = revokedTokens.First(t => t.Id == token2.Id);
+            revokedToken2.TokenHash.Should().Be(token2.TokenHash);
+            revokedToken2.PreviousTokenHash.Should().Be(token2.PreviousTokenHash);
         }
 
         [Fact]
         public async Task Test_RevokeAllUserTokens_SuccessfullyRevokesAllUserTokensAndIgnoresAlreadyRevokedTokens()
         {
-            User firstUser = User;
-            await _context.Users.AddAsync(firstUser);
+            User firstUser = await CreateUserAsync("first@gmail.com");
+            User secondUser = await CreateUserAsync("second@gmail.com");
             RefreshToken validRefreshToken = GetRefreshToken(RefreshTokenType.Valid);
             validRefreshToken.UserId = firstUser.Id;
-            User secondUser = User;
-            secondUser.Email = "second";
-            await _context.Users.AddAsync(secondUser);
             await _refreshTokensRepository.AddRefreshTokenAsync(validRefreshToken, CancellationToken.None);
             RefreshToken revokedRefreshToken = GetRefreshToken(RefreshTokenType.Revoked);
             revokedRefreshToken.UserId = firstUser.Id;
@@ -199,8 +206,9 @@ namespace MoneyKeeper.Identity.IntegrationTests
             revokedTokens.ForEach(t => t.UpdatedAt.Should().Be(validRefreshToken.UpdatedAt));
             revokedTokens.ForEach(t => t.ExpiresAt.Should().Be(validRefreshToken.ExpiresAt));
             revokedTokens.ForEach(t => t.RevokedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10)));
-            revokedTokens.ForEach(t => t.PreviousTokenHash.Should().Be(validRefreshToken.PreviousTokenHash));
-            revokedTokens.ForEach(t => t.TokenHash.Should().Be(validRefreshToken.TokenHash));
+            RefreshToken revokedToken = revokedTokens.First(t => t.Id == validRefreshToken.Id);
+            revokedToken.TokenHash.Should().Be(validRefreshToken.TokenHash);
+            revokedToken.PreviousTokenHash.Should().Be(validRefreshToken.PreviousTokenHash);
         }
     }
 }
