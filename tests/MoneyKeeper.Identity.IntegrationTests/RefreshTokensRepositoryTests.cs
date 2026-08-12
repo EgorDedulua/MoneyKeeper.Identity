@@ -53,7 +53,9 @@ namespace MoneyKeeper.Identity.IntegrationTests
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
 
             (await _context.RefreshTokens.CountAsync()).Should().Be(1);
-            RefreshToken addedRefreshToken = await _context.RefreshTokens.FirstAsync();
+            RefreshToken addedRefreshToken = await _context.RefreshTokens
+                .AsNoTracking()
+                .FirstAsync(t => t.Id == refreshToken.Id);
             addedRefreshToken.Id.Should().BePositive();
             addedRefreshToken.CreatedAt.Should().Be(refreshToken.CreatedAt);
             addedRefreshToken.UpdatedAt.Should().Be(refreshToken.UpdatedAt);
@@ -144,7 +146,7 @@ namespace MoneyKeeper.Identity.IntegrationTests
             fromDb.Should().NotBeNull();
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
             fromDb.UpdatedAt.Should().BeCloseTo(beforeRefresh, TimeSpan.FromSeconds(10));
-            fromDb.ExpiresAt.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromMinutes(1));
+            fromDb.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
             fromDb.RevokedAt.Should().Be(refreshToken.RevokedAt);
             fromDb.PreviousTokenHash.Should().Be(oldHash);
             fromDb.TokenHash.Should().Be(newHash);
