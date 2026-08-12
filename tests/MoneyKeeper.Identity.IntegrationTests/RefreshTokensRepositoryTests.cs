@@ -142,7 +142,9 @@ namespace MoneyKeeper.Identity.IntegrationTests
 
             await _refreshTokensRepository.RefreshTokenAsync(refreshToken.Id, newHash, CancellationToken.None);
 
-            RefreshToken fromDb = await _context.RefreshTokens.FirstAsync(t => t.Id == refreshToken.Id);
+            RefreshToken fromDb = await _context.RefreshTokens
+                .AsNoTracking()
+                .FirstAsync(t => t.Id == refreshToken.Id);
             fromDb.Should().NotBeNull();
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
             fromDb.UpdatedAt.Should().BeCloseTo(beforeRefresh, TimeSpan.FromSeconds(10));
