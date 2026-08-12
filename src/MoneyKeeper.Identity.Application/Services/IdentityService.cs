@@ -128,7 +128,7 @@ namespace MoneyKeeper.Identity.Application.Services
             string newAccessToken = _jwtService.GenerateAccessToken(user);
             string newRefreshToken = _jwtService.GenerateRefreshToken();
             string newHash = _jwtService.ComputeHash(newRefreshToken);
-            await _refreshTokensRepository.RefreshToken(storedToken.Id, newHash, cancellationToken);
+            await _refreshTokensRepository.RefreshTokenAsync(storedToken.Id, newHash, cancellationToken);
             _logger.LogInformation("Обновлен refresh token для пользователя с id {UserId}", storedToken.UserId);
 
             return Result<AccessTokenUpdateResponse>.Success

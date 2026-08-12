@@ -65,7 +65,6 @@
   <Project Path="src/MoneyKeeper.Identity.Core/MoneyKeeper.Identity.Core.csproj" />
   <Project Path="src/MoneyKeeper.Identity.Infrastructure/MoneyKeeper.Identity.Infrastructure.csproj" />
   <Project Path="src/MoneyKeeper.Identity/MoneyKeeper.Identity.csproj" />
-  <Project Path="tests/MoneyKeeper.Identity.IntegrationTests/MoneyKeeper.Identity.IntegrationTests.csproj" Id="5cac4e73-cdaa-43d3-9c02-ee273be62d8c">
-    <Build Solution="Debug|*" Project="false" />
-  </Project>
+  <Project Path="tests/MoneyKeeper.Identity.IntegrationTests/MoneyKeeper.Identity.IntegrationTests.csproj" Id="5cac4e73-cdaa-43d3-9c02-ee273be62d8c"/>
+
 </Solution>

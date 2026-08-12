@@ -14,6 +14,6 @@ namespace MoneyKeeper.Identity.Core.Common.Interfaces
 
         Task RevokeTokenAsync(int tokenId, CancellationToken cancellationToken);
 
-        Task RefreshToken(int tokenId, string newHash, CancellationToken cancellationToken);
+        Task RefreshTokenAsync(int tokenId, string newHash, CancellationToken cancellationToken);
     }
 }

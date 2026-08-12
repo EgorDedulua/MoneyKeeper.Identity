@@ -55,7 +55,7 @@ namespace MoneyKeeper.Identity.IntegrationTests
         {
             await _usersRepository.AddAsync(User, CancellationToken.None);
 
-            User? userFromDb = await _usersRepository.GetByEmailAsync(User.Email.Reverse().ToString()!, CancellationToken.None);
+            User? userFromDb = await _usersRepository.GetByEmailAsync("nonexisten", CancellationToken.None);
             userFromDb.Should().BeNull();
         }
 

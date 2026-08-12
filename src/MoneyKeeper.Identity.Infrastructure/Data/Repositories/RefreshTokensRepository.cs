@@ -33,7 +33,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Repositories
                 .FirstOrDefaultAsync(t => t.PreviousTokenHash == previousTokenHash, cancellationToken);
         }
 
-        public async Task RefreshToken(int tokenId, string newHash, CancellationToken cancellationToken)
+        public async Task RefreshTokenAsync(int tokenId, string newHash, CancellationToken cancellationToken)
         {
             await _db.RefreshTokens
                 .Where(t => t.Id == tokenId)
@@ -48,8 +48,8 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Repositories
         {
             await _db.RefreshTokens
                 .Where(t => t.UserId == userId && t.RevokedAt == null)
-                .ExecuteUpdateAsync(s =>
-                    s.SetProperty(t => t.RevokedAt, DateTime.UtcNow), cancellationToken);
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(t => t.RevokedAt, DateTime.UtcNow), cancellationToken);
         }
 
         public async Task RevokeTokenAsync(int tokenId, CancellationToken cancellationToken)
