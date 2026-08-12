@@ -222,7 +222,7 @@ namespace MoneyKeeper.Identity.UnitTests
             result.Value.AccessToken.Should().Be(ACCESS_TOKEN);
             result.Value.RefreshToken.Should().Be(REFRESH_TOKEN);
             _refreshTokensRepositoryMock
-                .Verify(m => m.RefreshToken(1, HASH, It.IsAny<CancellationToken>()), Times.Once);
+                .Verify(m => m.RefreshTokenAsync(1, HASH, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -238,7 +238,7 @@ namespace MoneyKeeper.Identity.UnitTests
             _refreshTokensRepositoryMock
                 .Verify(m => m.RevokeAllUserTokensAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             _refreshTokensRepositoryMock
-                .Verify(m => m.RefreshToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                .Verify(m => m.RefreshTokenAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             _jwtServiceMock
                 .Verify(m => m.GenerateAccessToken(It.IsAny<User>()), Times.Never);
             _jwtServiceMock
@@ -261,7 +261,7 @@ namespace MoneyKeeper.Identity.UnitTests
             _refreshTokensRepositoryMock
                .Verify(m => m.RevokeAllUserTokensAsync(refreshToken.UserId, It.IsAny<CancellationToken>()), Times.Once);
             _refreshTokensRepositoryMock
-                .Verify(m => m.RefreshToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                .Verify(m => m.RefreshTokenAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             _jwtServiceMock
                 .Verify(m => m.GenerateAccessToken(It.IsAny<User>()), Times.Never);
             _jwtServiceMock
@@ -284,7 +284,7 @@ namespace MoneyKeeper.Identity.UnitTests
             _refreshTokensRepositoryMock
                .Verify(m => m.RevokeAllUserTokensAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             _refreshTokensRepositoryMock
-                .Verify(m => m.RefreshToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                .Verify(m => m.RefreshTokenAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             _jwtServiceMock
                 .Verify(m => m.GenerateAccessToken(It.IsAny<User>()), Times.Never);
             _jwtServiceMock
@@ -307,7 +307,7 @@ namespace MoneyKeeper.Identity.UnitTests
             _refreshTokensRepositoryMock
                .Verify(m => m.RevokeAllUserTokensAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             _refreshTokensRepositoryMock
-                .Verify(m => m.RefreshToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                .Verify(m => m.RefreshTokenAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             _jwtServiceMock
                 .Verify(m => m.GenerateAccessToken(It.IsAny<User>()), Times.Never);
             _jwtServiceMock
@@ -330,7 +330,7 @@ namespace MoneyKeeper.Identity.UnitTests
             _refreshTokensRepositoryMock
                .Verify(m => m.RevokeAllUserTokensAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             _refreshTokensRepositoryMock
-                .Verify(m => m.RefreshToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                .Verify(m => m.RefreshTokenAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             _jwtServiceMock
                 .Verify(m => m.GenerateAccessToken(It.IsAny<User>()), Times.Never);
             _jwtServiceMock
@@ -354,7 +354,7 @@ namespace MoneyKeeper.Identity.UnitTests
             _refreshTokensRepositoryMock
                .Verify(m => m.RevokeAllUserTokensAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
             _refreshTokensRepositoryMock
-                .Verify(m => m.RefreshToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+                .Verify(m => m.RefreshTokenAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             _jwtServiceMock
                 .Verify(m => m.GenerateAccessToken(It.IsAny<User>()), Times.Never);
             _jwtServiceMock
