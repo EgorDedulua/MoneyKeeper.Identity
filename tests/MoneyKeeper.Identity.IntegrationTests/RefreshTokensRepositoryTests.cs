@@ -18,7 +18,6 @@ namespace MoneyKeeper.Identity.IntegrationTests
 
         private RefreshToken GetRefreshToken(RefreshTokenType tokenType) => new RefreshToken
         {
-            Id = 1,
             UserId = 1,
             TokenHash = "hash",
             PreviousTokenHash = "previousTokenHash",
@@ -44,7 +43,7 @@ namespace MoneyKeeper.Identity.IntegrationTests
 
             (await _context.RefreshTokens.CountAsync()).Should().Be(1);
             RefreshToken addedRefreshToken = await _context.RefreshTokens.FirstAsync();
-            addedRefreshToken.Id.Should().Be(1);
+            addedRefreshToken.Id.Should().BePositive();
             addedRefreshToken.CreatedAt.Should().Be(refreshToken.CreatedAt);
             addedRefreshToken.UpdatedAt.Should().Be(refreshToken.UpdatedAt);
             addedRefreshToken.ExpiresAt.Should().Be(refreshToken.ExpiresAt);
@@ -62,7 +61,6 @@ namespace MoneyKeeper.Identity.IntegrationTests
             
             RefreshToken? fromDb = await _refreshTokensRepository.GetByHashAsync(refreshToken.TokenHash, CancellationToken.None);
             fromDb.Should().NotBeNull();
-            fromDb.Id.Should().Be(1);
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
             fromDb.UpdatedAt.Should().Be(refreshToken.UpdatedAt);
             fromDb.ExpiresAt.Should().Be(refreshToken.ExpiresAt);
@@ -91,7 +89,6 @@ namespace MoneyKeeper.Identity.IntegrationTests
 
             RefreshToken? fromDb = await _refreshTokensRepository.GetByPreviousTokenHashAsync(refreshToken.PreviousTokenHash!, CancellationToken.None);
             fromDb.Should().NotBeNull();
-            fromDb.Id.Should().Be(refreshToken.Id);
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
             fromDb.UpdatedAt.Should().Be(refreshToken.UpdatedAt);
             fromDb.ExpiresAt.Should().Be(refreshToken.ExpiresAt);
@@ -124,7 +121,6 @@ namespace MoneyKeeper.Identity.IntegrationTests
 
             RefreshToken fromDb = await _context.RefreshTokens.FirstAsync(t => t.Id == refreshToken.Id);
             fromDb.Should().NotBeNull();
-            fromDb.Id.Should().Be(refreshToken.Id);
             fromDb.CreatedAt.Should().Be(refreshToken.CreatedAt);
             fromDb.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
             fromDb.ExpiresAt.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromSeconds(10));
@@ -136,7 +132,8 @@ namespace MoneyKeeper.Identity.IntegrationTests
         [Fact]
         public async Task Test_RevokeAllUserTokens_SuccessfullyRevokesAllTokens()
         {
-            await _context.Users.AddAsync(User);
+            User firstUser = User;
+            await _context.Users.AddAsync(firstUser);
             RefreshToken refreshToken = GetRefreshToken(RefreshTokenType.Valid);
             User secondUser = User;
             secondUser.Email = "second";
@@ -144,16 +141,16 @@ namespace MoneyKeeper.Identity.IntegrationTests
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshToken, CancellationToken.None);
             RefreshToken secondUserRefreshToken = GetRefreshToken(RefreshTokenType.Valid);
-            secondUserRefreshToken.UserId = 2;
+            secondUserRefreshToken.UserId = secondUser.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(secondUserRefreshToken, CancellationToken.None);
 
             await _refreshTokensRepository.RevokeAllUserTokensAsync(1, CancellationToken.None);
 
             List<RefreshToken> revokedTokens = await _context.RefreshTokens
-                .Where(t => t.UserId == 1)
+                .Where(t => t.UserId == firstUser.Id)
                 .ToListAsync();
             revokedTokens.Should().HaveCount(2);
-            revokedTokens.ForEach(t => t.UserId.Should().Be(1));
+            revokedTokens.ForEach(t => t.UserId.Should().Be(firstUser.Id));
             revokedTokens.ForEach(t => t.CreatedAt.Should().Be(refreshToken.CreatedAt));
             revokedTokens.ForEach(t => t.UpdatedAt.Should().Be(refreshToken.UpdatedAt));
             revokedTokens.ForEach(t => t.ExpiresAt.Should().Be(refreshToken.ExpiresAt));
@@ -165,7 +162,8 @@ namespace MoneyKeeper.Identity.IntegrationTests
         [Fact]
         public async Task Test_RevokeAllUserTokens_SuccessfullyRevokesAllUserTokensAndIgnoresAlreadyRevokedTokens()
         {
-            await _context.Users.AddAsync(User);
+            User firstUser = User;
+            await _context.Users.AddAsync(firstUser);
             RefreshToken validRefreshToken = GetRefreshToken(RefreshTokenType.Valid);
             User secondUser = User;
             secondUser.Email = "second";
@@ -174,16 +172,16 @@ namespace MoneyKeeper.Identity.IntegrationTests
             RefreshToken revokedRefreshToken = GetRefreshToken(RefreshTokenType.Revoked);
             await _refreshTokensRepository.AddRefreshTokenAsync(revokedRefreshToken, CancellationToken.None);
             RefreshToken secondUserRefreshToken = GetRefreshToken(RefreshTokenType.Valid);
-            secondUserRefreshToken.UserId = 2;
+            secondUserRefreshToken.UserId = secondUser.Id;
             await _refreshTokensRepository.AddRefreshTokenAsync(secondUserRefreshToken, CancellationToken.None);
 
             await _refreshTokensRepository.RevokeAllUserTokensAsync(1, CancellationToken.None);
 
             List<RefreshToken> revokedTokens = await _context.RefreshTokens
-                .Where(t => t.UserId == 1 && DateTime.UtcNow - t.RevokedAt >= TimeSpan.FromSeconds(0))
+                .Where(t => t.UserId == firstUser.Id && DateTime.UtcNow - t.RevokedAt >= TimeSpan.FromSeconds(0))
                 .ToListAsync();
             revokedTokens.Should().HaveCount(1);
-            revokedTokens.ForEach(t => t.UserId.Should().Be(1));
+            revokedTokens.ForEach(t => t.UserId.Should().Be(firstUser.Id));
             revokedTokens.ForEach(t => t.CreatedAt.Should().Be(validRefreshToken.CreatedAt));
             revokedTokens.ForEach(t => t.UpdatedAt.Should().Be(validRefreshToken.UpdatedAt));
             revokedTokens.ForEach(t => t.ExpiresAt.Should().Be(validRefreshToken.ExpiresAt));

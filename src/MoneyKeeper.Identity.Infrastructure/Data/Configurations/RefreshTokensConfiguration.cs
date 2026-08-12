@@ -12,6 +12,11 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
                 .HasKey(t => t.Id);
 
             builder
+                .Property(t => t.Id)
+                .ValueGeneratedOnAdd()
+                .UseIdentityColumn();
+
+            builder
                 .HasIndex(t => t.TokenHash)
                 .IsUnique();
 

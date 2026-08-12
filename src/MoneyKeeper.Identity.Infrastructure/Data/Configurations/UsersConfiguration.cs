@@ -12,6 +12,11 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
                 .HasKey(u => u.Id);
 
             builder
+                .Property(u => u.Id)
+                .ValueGeneratedOnAdd()
+                .UseIdentityColumn();
+
+            builder
                 .Property(u => u.Email)
                 .IsRequired();
 
