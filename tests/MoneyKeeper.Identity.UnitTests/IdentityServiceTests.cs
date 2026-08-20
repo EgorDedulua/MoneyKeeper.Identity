@@ -1,12 +1,17 @@
-﻿using FluentAssertions;
+﻿using AutoMapper;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using MoneyKeeper.Identity.Application.Common;
 using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
+using MoneyKeeper.Identity.Application.Profiles;
 using MoneyKeeper.Identity.Application.Services;
 using MoneyKeeper.Identity.Core.Common;
 using MoneyKeeper.Identity.Core.Common.Interfaces;
 using MoneyKeeper.Identity.Core.Entities;
+using MoneyKeeper.Identity.Profiles;
 using Moq;
 
 namespace MoneyKeeper.Identity.UnitTests
@@ -18,6 +23,8 @@ namespace MoneyKeeper.Identity.UnitTests
         private readonly Mock<IPasswordHasher> _passwordHasherMock = new();
         private readonly Mock<IJwtService> _jwtServiceMock = new();
         private readonly Mock<ILogger<IdentityService>> _loggerMock = new();
+        private readonly Mock<IMessageBus> _messgaeBusMock = new();
+        private readonly IMapper _mapper;
         private const string HASH = "hash";
         private const string ACCESS_TOKEN = "access_token";
         private const string REFRESH_TOKEN = "refresh_token";
@@ -46,6 +53,16 @@ namespace MoneyKeeper.Identity.UnitTests
             _passwordHasherMock.Reset();
             _jwtServiceMock.Reset();
             _loggerMock.Reset();
+            MapperConfiguration config = new MapperConfiguration(
+                cfg =>
+                {
+                    cfg.AddProfile<AuthResponseProfile>();
+                    cfg.AddProfile<UserRegisteredEventProfile>();
+                },
+                new NullLoggerFactory()
+            );
+
+            _mapper = config.CreateMapper();
         }
 
         private IdentityService CreateService()
@@ -55,7 +72,9 @@ namespace MoneyKeeper.Identity.UnitTests
                 _refreshTokensRepositoryMock.Object,
                 _passwordHasherMock.Object,
                 _jwtServiceMock.Object,
-                _loggerMock.Object
+                _loggerMock.Object,
+                _messgaeBusMock.Object,
+                _mapper
             );
         }
 

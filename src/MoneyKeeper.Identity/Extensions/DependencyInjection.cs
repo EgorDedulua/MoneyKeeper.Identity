@@ -1,7 +1,5 @@
 ﻿using FluentValidation;
-using Microsoft.Extensions.Options;
 using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
-using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
 using MoneyKeeper.Identity.Application.Profiles;
 using MoneyKeeper.Identity.Application.Services;
 using MoneyKeeper.Identity.Core.Common.Interfaces;
@@ -11,7 +9,6 @@ using MoneyKeeper.Identity.Infrastructure.Data.Repositories;
 using MoneyKeeper.Identity.Infrastructure.Messaging;
 using MoneyKeeper.Identity.Profiles;
 using MoneyKeeper.Identity.Validators;
-using RabbitMQ.Client;
 using System.Diagnostics;
 
 namespace MoneyKeeper.Identity.Extensions

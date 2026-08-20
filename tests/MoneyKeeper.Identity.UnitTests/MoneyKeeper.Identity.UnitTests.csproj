@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MoneyKeeper.Identity.Application\MoneyKeeper.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\src\MoneyKeeper.Identity\MoneyKeeper.Identity.csproj" />
   </ItemGroup>
 
   <ItemGroup>
