@@ -20,7 +20,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Migrations
                     Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValue: new DateTime(2026, 8, 11, 13, 49, 49, 795, DateTimeKind.Utc).AddTicks(5719))
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()")
                 },
                 constraints: table =>
                 {
@@ -37,8 +37,8 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Migrations
                     UserId = table.Column<int>(type: "int", nullable: false),
                     PreviousTokenHash = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValue: new DateTime(2026, 8, 11, 13, 49, 49, 814, DateTimeKind.Utc).AddTicks(1068)),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValue: new DateTime(2026, 8, 11, 13, 49, 49, 814, DateTimeKind.Utc).AddTicks(3109)),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
                     RevokedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>

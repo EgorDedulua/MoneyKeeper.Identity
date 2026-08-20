@@ -12,7 +12,7 @@ using MoneyKeeper.Identity.Infrastructure.Data;
 namespace MoneyKeeper.Identity.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(IdentityDbContext))]
-    [Migration("20260811134952_InitialCreate")]
+    [Migration("20260820173215_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -36,7 +36,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2026, 8, 11, 13, 49, 49, 814, DateTimeKind.Utc).AddTicks(1068));
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
@@ -54,7 +54,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2026, 8, 11, 13, 49, 49, 814, DateTimeKind.Utc).AddTicks(3109));
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -84,7 +84,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2026, 8, 11, 13, 49, 49, 795, DateTimeKind.Utc).AddTicks(5719));
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
 
                     b.Property<string>("Email")
                         .IsRequired()
