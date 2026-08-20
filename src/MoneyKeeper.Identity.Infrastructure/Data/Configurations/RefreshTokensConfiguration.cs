@@ -33,12 +33,12 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
             builder
                 .Property(t => t.CreatedAt)
                 .IsRequired()
-                .HasDefaultValue(DateTime.UtcNow);
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             builder
                 .Property(t => t.UpdatedAt)
                 .IsRequired()
-                .HasDefaultValue(DateTime.UtcNow);
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             builder
                 .Property(t => t.ExpiresAt)

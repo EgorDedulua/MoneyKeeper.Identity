@@ -35,7 +35,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Data.Configurations
             builder
                 .Property(u => u.CreatedAt)
                 .IsRequired()
-                .HasDefaultValue(DateTime.UtcNow);
+                .HasDefaultValueSql("SYSUTCDATETIME()"); ;
         }
     }
 }
