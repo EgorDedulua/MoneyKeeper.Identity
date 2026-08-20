@@ -1,7 +1,7 @@
 ﻿using MoneyKeeper.Identity.Application.Contracts.Auth;
 using MoneyKeeper.Identity.Core.Common;
 
-namespace MoneyKeeper.Identity.Application.Common.Interfaces
+namespace MoneyKeeper.Identity.Application.Common.Interfaces.Auth
 {
     public interface IIdentityService
     {

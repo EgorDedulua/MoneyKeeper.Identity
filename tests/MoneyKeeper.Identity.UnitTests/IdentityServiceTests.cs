@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using MoneyKeeper.Identity.Application.Common;
-using MoneyKeeper.Identity.Application.Common.Interfaces;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
 using MoneyKeeper.Identity.Application.Services;
 using MoneyKeeper.Identity.Core.Common;

@@ -23,7 +23,7 @@ namespace MoneyKeeper.Identity.IntegrationTests.Common
             string password = Environment.GetEnvironmentVariable("TEST_DB_PASSWORD")
                 ?? throw new InvalidOperationException("TEST_DB_PASSWORD not set");
 
-            Container = new MsSqlBuilder("mcr.microsoft.com/azure-sql-edge:latest")
+            Container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
                 .WithPassword(password)
                 .WithAutoRemove(true)
                 .WithCleanUp(true)

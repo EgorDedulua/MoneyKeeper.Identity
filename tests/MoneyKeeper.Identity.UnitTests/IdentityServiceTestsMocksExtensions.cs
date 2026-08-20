@@ -1,4 +1,4 @@
-﻿using MoneyKeeper.Identity.Application.Common.Interfaces;
+﻿using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
 using MoneyKeeper.Identity.Core.Common.Interfaces;
 using MoneyKeeper.Identity.Core.Entities;

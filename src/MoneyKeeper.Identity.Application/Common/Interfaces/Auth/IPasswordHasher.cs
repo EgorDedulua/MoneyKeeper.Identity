@@ -1,4 +1,4 @@
-﻿namespace MoneyKeeper.Identity.Application.Common.Interfaces
+﻿namespace MoneyKeeper.Identity.Application.Common.Interfaces.Auth
 {
     public interface IPasswordHasher
     {

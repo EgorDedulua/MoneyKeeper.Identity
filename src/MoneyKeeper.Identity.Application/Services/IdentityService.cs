@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using MoneyKeeper.Identity.Application.Common;
-using MoneyKeeper.Identity.Application.Common.Interfaces;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
+using MoneyKeeper.Identity.Application.Events;
 using MoneyKeeper.Identity.Core.Common;
 using MoneyKeeper.Identity.Core.Common.Interfaces;
 using MoneyKeeper.Identity.Core.Entities;
@@ -15,15 +18,19 @@ namespace MoneyKeeper.Identity.Application.Services
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtService _jwtService;
         private readonly ILogger<IdentityService> _logger;
+        private readonly IMessageBus _messageBus;
+        private readonly IMapper _mapper;
 
         public IdentityService(IUsersRepository identityRepository, IRefreshTokensRepository refreshTokensRepository, 
-            IPasswordHasher passwordHasher, IJwtService jwtService, ILogger<IdentityService> logger)
+            IPasswordHasher passwordHasher, IJwtService jwtService, ILogger<IdentityService> logger, IMessageBus messageBus, IMapper mapper)
         {
             _usersRepository = identityRepository;
             _refreshTokensRepository = refreshTokensRepository;
             _passwordHasher = passwordHasher;
             _jwtService = jwtService;
             _logger = logger;
+            _messageBus = messageBus;
+            _mapper = mapper;
         }
 
         public async Task<Result<AuthResult>> Login(LoginRequest request, CancellationToken cancellationToken)
@@ -83,6 +90,7 @@ namespace MoneyKeeper.Identity.Application.Services
             await _refreshTokensRepository.AddRefreshTokenAsync(refreshTokenEntity, cancellationToken);
             AuthResult response = new AuthResult(user.Email, user.UserName, user.Id, user.CreatedAt, accessToken, refreshToken);
             _logger.LogInformation("Завершена регистрация пользователя с id {UserId}", user.Id);
+            await _messageBus.PublishUserRegisteredAsync(_mapper.Map<UserRegisteredEvent>(user), cancellationToken);
 
             return Result<AuthResult>.Success(response);
         }

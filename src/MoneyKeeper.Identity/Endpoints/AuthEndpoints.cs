@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using MoneyKeeper.Identity.Application.Common.Interfaces;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
 using MoneyKeeper.Identity.Contracts;
 using MoneyKeeper.Identity.Extensions;

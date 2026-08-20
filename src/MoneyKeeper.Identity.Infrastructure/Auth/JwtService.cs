@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Options;
-using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Core.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Cryptography;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
 
 namespace MoneyKeeper.Identity.Infrastructure.Auth
 {
@@ -23,8 +23,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Auth
             List<Claim> claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(ClaimTypes.Email, user.Email)
             };
 
             JwtSecurityToken token = new JwtSecurityToken(

@@ -1,5 +1,5 @@
 ﻿using Isopoh.Cryptography.Argon2;
-using MoneyKeeper.Identity.Application.Common.Interfaces;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
 
 namespace MoneyKeeper.Identity.Infrastructure.Auth
 {

@@ -30,6 +30,7 @@ namespace MoneyKeeper.Identity.Filters
 
                         return Results.ValidationProblem(
                             title: "Validation error",
+                            detail: "Some objects are invalid",
                             errors: errors,
                             extensions: new Dictionary<string, object?>
                             {

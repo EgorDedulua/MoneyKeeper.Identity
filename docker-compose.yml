@@ -1,4 +1,21 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: moneykeeper-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_HOST: /
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 30s,
+      timeout: 10s,
+      retries: 5
   db:
     container_name: database
     image: mcr.microsoft.com/azure-sql-edge:latest
@@ -19,12 +36,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     container_name: identity
     image: darv1nnn/moneykeeper-identity:latest
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ConnectionStrings__DefaultConnection=Server=db;Database=Identity;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true
       - JwtOptions__SecretKey=${SECRET_JWT_KEY}
+      - RabbitMqSettings__HostName=rabbitmq
+      - RabbitMqSettings__Port=5672
+      - RabbitMqSettings__UserName=${RABBITMQ_DEFAULT_USER}
+      - RabbitMqSettings__Password=${RABBITMQ_DEFAULT_PASS}
+      - RabbitMqSettings__VirtualHost=/
     ports:
       - "3000:8080"
       - "3001:8081"
@@ -36,4 +60,5 @@ services:
       start_period: 40s
 
 volumes:
+  rabbitmq-data:
   sql-data:

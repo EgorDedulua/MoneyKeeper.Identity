@@ -11,14 +11,14 @@ namespace MoneyKeeper.Identity
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddServices();
             builder.Services.AddConfigurations(builder.Configuration);
+            builder.Services.AddServices();
+            builder.Services.AddRabbitMq(builder.Configuration);
             builder.UseAppLogging();
             builder.Services.AddDb(builder.Configuration);
             builder.Services.AddOpenApi();
             builder.Services.AddAppHealthChecks();
             builder.Services.AddAppAuthorization(builder.Configuration);
-            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             var app = builder.Build();
             app.MigrateDb();
             if (app.Environment.IsDevelopment())
