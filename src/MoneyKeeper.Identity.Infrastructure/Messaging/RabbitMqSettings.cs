@@ -11,6 +11,8 @@
         public string ExchangeName { get; set; } = "identity.events";
         public string UserRegisteredRoutingKey { get; set; } = "user.registered";
         public string UserDeletedRoutingKey { get; set; } = "user.deleted";
+        public string UserRegisteredQueue { get; set; } = "user.registered.queue";
+        public string UserDeletedQueue { get; set; } = "user.deleted.queue";
 
         public string DlExchange { get; set; } = "dead.letter.exchange";
         public string DlQueue { get; set; } = "dead.letter.queue";
@@ -29,5 +31,6 @@
 
         public int InitialConnectionRetryCount { get; set; } = 5;
         public int InitialConnectionRetryDelayMilliseconds { get; set; } = 2000;
+        public int ContinuationTimeoutSeconds { get; set; } = 30;
     }
 }

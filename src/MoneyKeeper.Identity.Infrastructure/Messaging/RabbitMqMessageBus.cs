@@ -117,7 +117,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
 
             if (lastException is not null)
                 throw new 
-                    InvalidOperationException($"Не удалось опубликовать сообщение {messageId} в основную очередь и DLQ.", lastException);
+                    InvalidOperationException($"Не удалось опубликовать сообщение {messageId} в основную очередь", lastException);
         }
 
         private async Task HandleBasicReturnAsync(BasicReturnEventArgs args)
