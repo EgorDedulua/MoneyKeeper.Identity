@@ -2,6 +2,9 @@
 using Microsoft.Extensions.Options;
 using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
 using MoneyKeeper.Identity.Application.Events;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
@@ -13,12 +16,62 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
         private readonly IConnection _connection;
         private readonly RabbitMqSettings _settings;
         private readonly ILogger<RabbitMqMessageBus> _logger;
+        private readonly ResiliencePipeline _publishPipeline;
 
         public RabbitMqMessageBus(IConnection connection, IOptions<RabbitMqSettings> options, ILogger<RabbitMqMessageBus> logger)
         {
             _connection = connection;
             _settings = options.Value;
             _logger = logger;
+            _publishPipeline = BuildPublishPipeline();
+        }
+
+        private ResiliencePipeline BuildPublishPipeline()
+        {
+            return new ResiliencePipelineBuilder()
+                .AddRetry(new RetryStrategyOptions
+                {
+                    ShouldHandle = new PredicateBuilder()
+                        .Handle<Exception>(ex => ex is not BrokenCircuitException),
+                    MaxRetryAttempts = _settings.RetryCount,
+                    Delay = TimeSpan.FromMilliseconds(_settings.RetryDelayMilliseconds),
+                    BackoffType = DelayBackoffType.Exponential,
+                    UseJitter = true,
+                    OnRetry = args =>
+                    {
+                        _logger.LogWarning(args.Outcome.Exception,
+                            "Ошибка публикации. Попытка {Attempt} из {RetryCount}",
+                            args.AttemptNumber + 1, _settings.RetryCount);
+                        return ValueTask.CompletedTask;
+                    }
+                })
+                .AddCircuitBreaker(new CircuitBreakerStrategyOptions
+                {
+                    ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                    FailureRatio = _settings.CircuitBreakerFailureRatio,
+                    SamplingDuration = TimeSpan.FromSeconds(_settings.CircuitBreakerSamplingDurationSeconds),
+                    MinimumThroughput = _settings.CircuitBreakerMinimumThroughput,
+                    BreakDuration = TimeSpan.FromSeconds(_settings.CircuitBreakerBreakDurationSeconds),
+                    OnOpened = args =>
+                    {
+                        _logger.LogCritical(
+                            "Circuit breaker публикации в RabbitMQ РАЗОМКНУТ. Причина: {Reason}",
+                            args.Outcome.Exception?.Message);
+                        return ValueTask.CompletedTask;
+                    },
+                    OnClosed = _ =>
+                    {
+                        _logger.LogInformation("Circuit breaker публикации в RabbitMQ снова ЗАМКНУТ");
+                        return ValueTask.CompletedTask;
+                    },
+                    OnHalfOpened = _ =>
+                    {
+                        _logger.LogInformation("Circuit breaker публикации в RabbitMQ в состоянии HALF-OPENED — пробная попытка");
+                        return ValueTask.CompletedTask;
+                    }
+                })
+                .AddTimeout(TimeSpan.FromSeconds(_settings.PublishTimeoutSeconds))
+                .Build();
         }
 
         public Task PublishUserRegisteredAsync(UserRegisteredEvent message, CancellationToken cancellationToken = default)
@@ -36,23 +89,16 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
             string messageId = Guid.NewGuid().ToString();
             BasicProperties properties = CreateBasicProperties(messageId, typeof(T).Name);
 
-            using var publishCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            publishCts.CancelAfter(TimeSpan.FromSeconds(_settings.PublishTimeoutSeconds));
-
-            int attempt = 0;
-            Exception? lastException = null;
-
-            while (attempt < _settings.RetryCount)
+            try
             {
-                ++attempt;
-                try
+                await _publishPipeline.ExecuteAsync(async ct =>
                 {
                     await using var channel = await _connection.CreateChannelAsync(
                         new CreateChannelOptions(
                             publisherConfirmationsEnabled: true,
                             publisherConfirmationTrackingEnabled: true
                         ),
-                        cancellationToken: publishCts.Token
+                        cancellationToken: ct
                     ).ConfigureAwait(false);
 
                     channel.BasicReturnAsync += async (sender, args) =>
@@ -64,60 +110,35 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                         mandatory: true,
                         basicProperties: properties,
                         body: body,
-                        cancellationToken: publishCts.Token
+                        cancellationToken: ct
                     ).ConfigureAwait(false);
 
                     _logger.LogInformation("Сообщение {MessageId} типа {MessageType} успешно опубликовано с routingKey {RoutingKey}",
                         messageId, typeof(T).Name, routingKey);
-
-                    return;
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    _logger.LogWarning("Публикация сообщения {MessageId} отменена вызывающим кодом.", messageId);
-                    throw;
-                }
-                catch (OperationCanceledException) when (publishCts.IsCancellationRequested)
-                {
-                    lastException = new TimeoutException($"Таймаут публикации сообщения {messageId}.");
-                    _logger.LogWarning(lastException, "Таймаут публикации сообщения {MessageId}. Попытка {Attempt}.", messageId, attempt);
-                }
-                catch (Exception ex)
-                {
-                    lastException = ex;
-                    _logger.LogWarning(ex, "Ошибка публикации сообщения {MessageId}. Попытка {Attempt} из {RetryCount}."
-                        , messageId, attempt, _settings.RetryCount);
-                }
-
-                if (attempt < _settings.RetryCount)
-                {
-                    try
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(_settings.RetryDelayMilliseconds), cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                    {
-                        _logger.LogWarning("Публикация сообщения {MessageId} отменена вызывающим кодом.", messageId);
-                        throw;
-                    }
-                }
+                }, cancellationToken).ConfigureAwait(false);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Публикация сообщения {MessageId} отменена вызывающим кодом.", messageId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Не удалось опубликовать сообщение {MessageId} после всех попыток. Попытка отправки в DLQ.", messageId);
 
-            _logger.LogError(lastException, "Не удалось опубликовать сообщение {MessageId} после {RetryCount} попыток. " +
-                "Попытка отправки в DLQ.", messageId, _settings.RetryCount);
+                await TrySendToDlqAsync(
+                    originalBody: body,
+                    originalMessageId: messageId,
+                    originalExchange: _settings.ExchangeName,
+                    originalRoutingKey: routingKey,
+                    failureException: ex,
+                    rethrowOnFailure: true,
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
 
-            await TrySendToDlqAsync(
-                originalBody: body,
-                originalMessageId: messageId,
-                originalExchange: _settings.ExchangeName,
-                originalRoutingKey: routingKey,
-                failureException: lastException,
-                cancellationToken: cancellationToken
-            ).ConfigureAwait(false);
-
-            if (lastException is not null)
-                throw new 
-                    InvalidOperationException($"Не удалось опубликовать сообщение {messageId} в основную очередь", lastException);
+                throw new InvalidOperationException($"Не удалось опубликовать сообщение {messageId} в основную очередь", ex);
+            }
         }
 
         private async Task HandleBasicReturnAsync(BasicReturnEventArgs args)
@@ -135,12 +156,13 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                 originalExchange: args.Exchange,
                 originalRoutingKey: args.RoutingKey,
                 failureException: null,
+                rethrowOnFailure: false,
                 cancellationToken: CancellationToken.None
             ).ConfigureAwait(false);
         }
 
         private async Task TrySendToDlqAsync(byte[] originalBody, string originalMessageId, string originalExchange,
-            string originalRoutingKey, Exception? failureException, CancellationToken cancellationToken)
+            string originalRoutingKey, Exception? failureException, bool rethrowOnFailure, CancellationToken cancellationToken)
         {
             try
             {
@@ -195,7 +217,9 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, "Не удалось отправить сообщение {MessageId} в DLQ. Сообщение потеряно", originalMessageId);
-                throw;
+
+                if (rethrowOnFailure)
+                    throw;
             }
         }
 

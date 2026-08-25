@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 
 namespace MoneyKeeper.Identity.Infrastructure.Messaging
 {
@@ -25,22 +24,21 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
             try
             {
                 await InitializeTopologyAsync(cancellationToken).ConfigureAwait(false);
-                _logger.LogInformation("Топология RabbitMQ инициализирована");
+                _logger.LogInformation(
+                   "Топология RabbitMQ инициализирована: Exchange={Exchange}, DeadLetterExchange={DlExchange}, " +
+                   "Queues=[{UserRegisteredQueue}, {UserDeletedQueue}, {DlQueue}]",
+                   _settings.ExchangeName, _settings.DlExchange,
+                   _settings.UserRegisteredQueue, _settings.UserDeletedQueue, _settings.DlQueue);
             }
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, "Критическая ошибка при иницализации топологии RabbitMQ");
                 throw;
             }
-
-            _connection.RecoverySucceededAsync += OnConnectionRecoveredAsync;
-            _connection.ConnectionRecoveryErrorAsync += OnConnectionRecoveryErrorAsync;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _connection.RecoverySucceededAsync -= OnConnectionRecoveredAsync;
-            _connection.ConnectionRecoveryErrorAsync -= OnConnectionRecoveryErrorAsync;
             return Task.CompletedTask;
         }
 
@@ -70,11 +68,18 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
 
+            var mainQueueArguments = new Dictionary<string, object?>
+            {
+                ["x-dead-letter-exchange"] = _settings.DlExchange,
+                ["x-dead-letter-routing-key"] = _settings.DlqRoutingKey
+            };
+
             await channel.QueueDeclareAsync(
                 queue: _settings.UserDeletedQueue,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
+                arguments: mainQueueArguments,
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
 
@@ -83,6 +88,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
+                arguments : mainQueueArguments,
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
 
@@ -114,31 +120,6 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                 routingKey: _settings.DlqRoutingKey,
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
-
-            _logger.LogInformation("Топология RabbitMQ инициализирована: Exchange={Exchange}, DeadLetterExchange={DlExchange}, " +
-                "Queues=[{Queue1}, {Queue2}, {Queue3}] ", _settings.ExchangeName, _settings.DlExchange,
-                _settings.DlQueue, _settings.UserDeletedQueue, _settings.UserRegisteredQueue);
-        }
-
-        private async Task OnConnectionRecoveredAsync(object sender, AsyncEventArgs e)
-        {
-            _logger.LogWarning("Соединение с RabbitMQ восстановлено. Повторная инициализация топологии...");
-
-            try
-            {
-                await InitializeTopologyAsync(CancellationToken.None).ConfigureAwait(false);
-                _logger.LogInformation("Топология RabbitMQ повторно инициализирована после восстановления");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical(ex, "Не удалось повторно инициализировать топологию после восстановления соединения");
-            }
-        }
-
-        private Task OnConnectionRecoveryErrorAsync(object sender, AsyncEventArgs e)
-        {
-            _logger.LogError("Ошибка восстановления соединения с RabbitMQ");
-            return Task.CompletedTask;
         }
     }
 }

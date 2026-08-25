@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 
 namespace MoneyKeeper.Identity.Extensions
 {
-    public static class RabbitMQExtensions
+    public static class RabbitMqExtensions
     {
         public static IServiceCollection AddRabbitMq(this IServiceCollection services, IConfiguration configuration)
         {
@@ -14,7 +14,7 @@ namespace MoneyKeeper.Identity.Extensions
                 var factory = sp.GetRequiredService<RabbitMqConnectionFactory>();
                 return factory.CreateConnectionAsync().GetAwaiter().GetResult();
             });
-            services.AddScoped<IMessageBus, RabbitMqMessageBus>();
+            services.AddSingleton<IMessageBus, RabbitMqMessageBus>();
             services.AddHostedService<RabbitMqTopologyInitializer>();
 
             return services;
