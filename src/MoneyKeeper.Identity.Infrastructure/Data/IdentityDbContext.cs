@@ -10,6 +10,8 @@ namespace MoneyKeeper.Identity.Infrastructure.Data
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
+
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
         { }
 

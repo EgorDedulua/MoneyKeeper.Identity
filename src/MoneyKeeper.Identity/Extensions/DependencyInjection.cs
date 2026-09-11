@@ -1,12 +1,17 @@
 ﻿using FluentValidation;
+using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
+using MoneyKeeper.Identity.Application.Common.Interfaces.Outbox;
+using MoneyKeeper.Identity.Application.Outbox;
 using MoneyKeeper.Identity.Application.Profiles;
 using MoneyKeeper.Identity.Application.Services;
 using MoneyKeeper.Identity.Core.Common.Interfaces;
 using MoneyKeeper.Identity.ExceptionHandlers;
 using MoneyKeeper.Identity.Infrastructure.Auth;
+using MoneyKeeper.Identity.Infrastructure.Data;
 using MoneyKeeper.Identity.Infrastructure.Data.Repositories;
 using MoneyKeeper.Identity.Infrastructure.Messaging;
+using MoneyKeeper.Identity.Infrastructure.Outbox;
 using MoneyKeeper.Identity.Profiles;
 using MoneyKeeper.Identity.Validators;
 using System.Diagnostics;
@@ -19,6 +24,7 @@ namespace MoneyKeeper.Identity.Extensions
         {
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<IUnitOfWork, EfUnitOfWork>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IUsersRepository, UsersRepository>();
             services.AddScoped<IRefreshTokensRepository, RefreshTokensRepository>();
@@ -50,6 +56,7 @@ namespace MoneyKeeper.Identity.Extensions
         {
             services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
             services.Configure<RabbitMqSettings>(configuration.GetSection(nameof(RabbitMqSettings)));
+            services.Configure<OutboxSettings>(configuration.GetSection(nameof(OutboxSettings)));
             return services;
         }
     }

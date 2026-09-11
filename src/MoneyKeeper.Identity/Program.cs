@@ -14,6 +14,7 @@ namespace MoneyKeeper.Identity
             builder.Services.AddConfigurations(builder.Configuration);
             builder.Services.AddServices();
             builder.Services.AddRabbitMq(builder.Configuration);
+            builder.Services.AddOutbox();
             builder.UseAppLogging();
             builder.Services.AddDb(builder.Configuration);
             builder.Services.AddOpenApi();

@@ -1,4 +1,4 @@
-﻿using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
+﻿using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Infrastructure.Messaging;
 using RabbitMQ.Client;
 

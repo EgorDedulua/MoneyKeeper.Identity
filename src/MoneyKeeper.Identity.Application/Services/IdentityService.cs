@@ -1,13 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using MoneyKeeper.Identity.Application.Common;
+using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
-using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
 using MoneyKeeper.Identity.Application.Events;
 using MoneyKeeper.Identity.Core.Common;
 using MoneyKeeper.Identity.Core.Common.Interfaces;
 using MoneyKeeper.Identity.Core.Entities;
+using System.Text.Json;
 
 namespace MoneyKeeper.Identity.Application.Services
 {
@@ -15,21 +16,24 @@ namespace MoneyKeeper.Identity.Application.Services
     {
         private readonly IUsersRepository _usersRepository;
         private readonly IRefreshTokensRepository _refreshTokensRepository;
+        private readonly IOutboxRepository _outboxRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtService _jwtService;
         private readonly ILogger<IdentityService> _logger;
-        private readonly IMessageBus _messageBus;
         private readonly IMapper _mapper;
 
         public IdentityService(IUsersRepository identityRepository, IRefreshTokensRepository refreshTokensRepository, 
-            IPasswordHasher passwordHasher, IJwtService jwtService, ILogger<IdentityService> logger, IMessageBus messageBus, IMapper mapper)
+            IOutboxRepository outboxRepository, IPasswordHasher passwordHasher, IJwtService jwtService, IUnitOfWork unitOfWork,
+            ILogger<IdentityService> logger, IMapper mapper)
         {
             _usersRepository = identityRepository;
             _refreshTokensRepository = refreshTokensRepository;
+            _outboxRepository = outboxRepository;
+            _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
             _jwtService = jwtService;
             _logger = logger;
-            _messageBus = messageBus;
             _mapper = mapper;
         }
 
@@ -70,29 +74,52 @@ namespace MoneyKeeper.Identity.Application.Services
                     (Error.Conflict("Почта уже занята", ErrorCodes.EMAIL_ALREADY_TAKEN));
             }
 
-            User user = new User
-            {
-                Email = request.Email,
-                UserName = request.UserName,
-                Password = _passwordHasher.Hash(request.Password)
-            };
-            await _usersRepository.AddAsync(user, cancellationToken);
-            string accessToken = _jwtService.GenerateAccessToken(user);
-            string refreshToken = _jwtService.GenerateRefreshToken();
-            RefreshToken refreshTokenEntity = new RefreshToken
-            {
-                TokenHash = _jwtService.ComputeHash(refreshToken),
-                UserId = user.Id,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-            await _refreshTokensRepository.AddRefreshTokenAsync(refreshTokenEntity, cancellationToken);
-            AuthResult response = new AuthResult(user.Email, user.UserName, user.Id, user.CreatedAt, accessToken, refreshToken);
-            _logger.LogInformation("Завершена регистрация пользователя с id {UserId}", user.Id);
-            await _messageBus.PublishUserRegisteredAsync(_mapper.Map<UserRegisteredEvent>(user), cancellationToken);
+            await _unitOfWork.BeginTransactionAsync();
 
-            return Result<AuthResult>.Success(response);
+            try
+            {
+                User user = new User
+                {
+                    Email = request.Email,
+                    UserName = request.UserName,
+                    Password = _passwordHasher.Hash(request.Password)
+                };
+                await _usersRepository.AddAsync(user, cancellationToken);
+
+                string accessToken = _jwtService.GenerateAccessToken(user);
+                string refreshToken = _jwtService.GenerateRefreshToken();
+                RefreshToken refreshTokenEntity = new RefreshToken
+                {
+                    TokenHash = _jwtService.ComputeHash(refreshToken),
+                    UserId = user.Id,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                await _refreshTokensRepository.AddRefreshTokenAsync(refreshTokenEntity, cancellationToken);
+
+                UserRegisteredEvent userRegisteredEvent = _mapper.Map<UserRegisteredEvent>(user);
+                OutboxMessage outboxMessage = new OutboxMessage
+                {
+                    Id = Guid.NewGuid(),
+                    MessageType = nameof(UserRegisteredEvent),
+                    Payload = JsonSerializer.Serialize(userRegisteredEvent),
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _outboxRepository.AddAsync(outboxMessage, cancellationToken);
+
+                await _unitOfWork.CommitTransactionAsync();
+
+                AuthResult response = new AuthResult(user.Email, user.UserName, user.Id, user.CreatedAt, accessToken, refreshToken);
+                _logger.LogInformation("Завершена регистрация пользователя с id {UserId}", user.Id);
+
+                return Result<AuthResult>.Success(response);
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync().ConfigureAwait(false);
+                throw;
+            }
         }
 
         public async Task<Result<AccessTokenUpdateResponse>> Refresh(string? refreshToken, CancellationToken cancellationToken)

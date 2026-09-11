@@ -3,8 +3,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MoneyKeeper.Identity.Application.Common;
+using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Application.Common.Interfaces.Auth;
-using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
 using MoneyKeeper.Identity.Application.Contracts.Auth;
 using MoneyKeeper.Identity.Application.Profiles;
 using MoneyKeeper.Identity.Application.Services;
@@ -20,10 +20,11 @@ namespace MoneyKeeper.Identity.UnitTests
     {
         private readonly Mock<IUsersRepository> _usersRepositoryMock = new();
         private readonly Mock<IRefreshTokensRepository> _refreshTokensRepositoryMock = new();
+        private readonly Mock<IOutboxRepository> _outboxRepository = new();
+        private readonly Mock<IUnitOfWork> _unitOfWork = new();
         private readonly Mock<IPasswordHasher> _passwordHasherMock = new();
         private readonly Mock<IJwtService> _jwtServiceMock = new();
         private readonly Mock<ILogger<IdentityService>> _loggerMock = new();
-        private readonly Mock<IMessageBus> _messgaeBusMock = new();
         private readonly IMapper _mapper;
         private const string HASH = "hash";
         private const string ACCESS_TOKEN = "access_token";
@@ -70,10 +71,11 @@ namespace MoneyKeeper.Identity.UnitTests
             return new IdentityService(
                 _usersRepositoryMock.Object,
                 _refreshTokensRepositoryMock.Object,
+                _outboxRepository.Object,
                 _passwordHasherMock.Object,
                 _jwtServiceMock.Object,
+                _unitOfWork.Object,
                 _loggerMock.Object,
-                _messgaeBusMock.Object,
                 _mapper
             );
         }

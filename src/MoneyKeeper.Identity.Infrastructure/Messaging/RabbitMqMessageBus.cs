@@ -1,12 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MoneyKeeper.Identity.Application.Common.Interfaces.Messaging;
+using MoneyKeeper.Identity.Application.Common.Interfaces;
 using MoneyKeeper.Identity.Application.Events;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
 using System.Text.Json;
 
 namespace MoneyKeeper.Identity.Infrastructure.Messaging
@@ -17,6 +18,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
         private readonly RabbitMqSettings _settings;
         private readonly ILogger<RabbitMqMessageBus> _logger;
         private readonly ResiliencePipeline _publishPipeline;
+        private readonly IReadOnlyDictionary<string, string> _routingKeyMap;
 
         public RabbitMqMessageBus(IConnection connection, IOptions<RabbitMqSettings> options, ILogger<RabbitMqMessageBus> logger)
         {
@@ -24,6 +26,11 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
             _settings = options.Value;
             _logger = logger;
             _publishPipeline = BuildPublishPipeline();
+            _routingKeyMap = new Dictionary<string, string>()
+            {
+                [nameof(UserRegisteredEvent)] = _settings.UserRegisteredRoutingKey,
+                [nameof(UserDeletedEvent)] = _settings.UserDeletedRoutingKey
+            };
         }
 
         private ResiliencePipeline BuildPublishPipeline()
@@ -74,20 +81,19 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                 .Build();
         }
 
-        public Task PublishUserRegisteredAsync(UserRegisteredEvent message, CancellationToken cancellationToken = default)
-            => PublishAsync(message, _settings.UserRegisteredRoutingKey, cancellationToken);
-
-        public Task PublishUserDeletedAsync(UserDeletedEvent message, CancellationToken cancellationToken = default)
-            => PublishAsync(message, _settings.UserDeletedRoutingKey, cancellationToken);
-
-        private async Task PublishAsync<T>(T message, string routingKey, CancellationToken cancellationToken)
+        public async Task PublishAsync(Guid messageId, string messageType, string payload,
+            CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(message);
-            cancellationToken.ThrowIfCancellationRequested();
+            if (!_routingKeyMap.TryGetValue(messageType, out string? routingKey))
+            {
+                _logger.LogError("Не найден routing key для типа сообщения {MessageType}. Публикация сообщения '{MessageId} отменена", 
+                    messageType, messageId.ToString());
+                throw new InvalidOperationException($"Не найден routing key для типа сообщения '{messageType}'. Публикация сообщения '{messageId} отменена'");
+            }
 
-            byte[] body = JsonSerializer.SerializeToUtf8Bytes(message);
-            string messageId = Guid.NewGuid().ToString();
-            BasicProperties properties = CreateBasicProperties(messageId, typeof(T).Name);
+            byte[] body = Encoding.UTF8.GetBytes(payload);
+            string messageIdString = messageId.ToString();
+            BasicProperties properties = CreateBasicProperties(messageIdString, messageType);
 
             try
             {
@@ -114,22 +120,22 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                     ).ConfigureAwait(false);
 
                     _logger.LogInformation("Сообщение {MessageId} типа {MessageType} успешно опубликовано с routingKey {RoutingKey}",
-                        messageId, typeof(T).Name, routingKey);
+                        messageIdString, messageType, routingKey);
                 }, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                _logger.LogWarning("Публикация сообщения {MessageId} отменена вызывающим кодом.", messageId);
+                _logger.LogWarning("Публикация сообщения {MessageId} отменена вызывающим кодом.", messageIdString);
                 throw;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "Не удалось опубликовать сообщение {MessageId} после всех попыток. Попытка отправки в DLQ.", messageId);
+                    "Не удалось опубликовать сообщение {MessageId} после всех попыток. Попытка отправки в DLQ.", messageIdString);
 
                 await TrySendToDlqAsync(
                     originalBody: body,
-                    originalMessageId: messageId,
+                    originalMessageId: messageIdString,
                     originalExchange: _settings.ExchangeName,
                     originalRoutingKey: routingKey,
                     failureException: ex,
@@ -137,7 +143,7 @@ namespace MoneyKeeper.Identity.Infrastructure.Messaging
                     cancellationToken: cancellationToken
                 ).ConfigureAwait(false);
 
-                throw new InvalidOperationException($"Не удалось опубликовать сообщение {messageId} в основную очередь", ex);
+                throw new InvalidOperationException($"Не удалось опубликовать сообщение {messageIdString} в основную очередь", ex);
             }
         }
 
